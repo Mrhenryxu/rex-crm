@@ -83,8 +83,10 @@ test('create, search, sort, paginate, call and delete contacts', async ({ page, 
     await expect(page.getByRole('status')).toContainText('Outcome:');
     await expect(page.getByRole('table', { name: 'Latest calls' }).getByRole('row')).toHaveCount(2);
 
-    // Delete Alice after confirming.
+    // Delete Alice after confirming. Search first: the database may hold other contacts (e.g. demo data).
     await page.getByRole('link', { name: 'Back to contacts' }).click();
+    await page.getByRole('textbox', { name: 'Name' }).fill(`Alice ${run}`);
+    await page.getByRole('button', { name: 'Search' }).click();
     await page.getByRole('link', { name: `Alice ${run}` }).click();
     await page.getByRole('button', { name: 'Delete' }).click();
     await page.getByRole('dialog', { name: 'Delete contact' }).getByRole('button', { name: 'Delete contact' }).click();
