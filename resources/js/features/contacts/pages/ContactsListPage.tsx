@@ -1,4 +1,4 @@
-import { Button, Card, Group, LoadingOverlay, Skeleton, Stack, Text, Title } from '@mantine/core';
+import { Alert, Button, Card, Group, LoadingOverlay, Skeleton, Stack, Text, Title } from '@mantine/core';
 import { IconUserPlus } from '@tabler/icons-react';
 import { Link, useSearchParams } from 'react-router';
 import { ApiErrorAlert } from '@/components/ui/ApiErrorAlert';
@@ -6,6 +6,7 @@ import { ListPagination, SortSelect } from '../components/ContactListControls';
 import { ContactSearchForm } from '../components/ContactSearchForm';
 import { ContactsTable } from '../components/ContactsTable';
 import { useContactList } from '../hooks/useContacts';
+import { useNotice } from '../hooks/useNotice';
 import type { ContactFilters, ContactListParams } from '../types/contact';
 import { DEFAULT_LIST_PARAMS, filtersOf, parseListParams, toSearchParams } from '../utils/listParams';
 
@@ -13,6 +14,7 @@ export function ContactsListPage() {
     const [searchParams, setSearchParams] = useSearchParams();
     const params = parseListParams(searchParams);
     const { data, error, loading } = useContactList(params);
+    const [notice, dismissNotice] = useNotice();
 
     const navigate = (changes: Partial<ContactListParams>) => setSearchParams(toSearchParams({ ...params, ...changes }));
 
@@ -29,6 +31,12 @@ export function ContactsListPage() {
                     New contact
                 </Button>
             </Group>
+
+            {notice && (
+                <Alert color="green" variant="light" withCloseButton onClose={dismissNotice} closeButtonLabel="Dismiss message">
+                    {notice}
+                </Alert>
+            )}
 
             <Card withBorder padding="md">
                 <ContactSearchForm initialValues={filtersOf(params)} onSearch={search} onClear={clear} />
