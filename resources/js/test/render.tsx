@@ -7,7 +7,7 @@ import { Providers } from '@/app/Providers';
 /** Render the full app at a URL, as the browser would. */
 export function renderApp(url = '/contacts'): RenderResult {
     return render(
-        <Providers>
+        <Providers env="test">
             <MemoryRouter initialEntries={[url]}>
                 <App />
             </MemoryRouter>
@@ -18,7 +18,7 @@ export function renderApp(url = '/contacts'): RenderResult {
 /** Render one element inside the providers and a router. */
 export function renderWithProviders(ui: ReactElement, { url = '/', path = '*' }: { url?: string; path?: string } = {}): RenderResult {
     return render(
-        <Providers>
+        <Providers env="test">
             <MemoryRouter initialEntries={[url]}>
                 <Routes>
                     <Route path={path} element={ui} />
