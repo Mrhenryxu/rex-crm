@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+// React SPA: every non-API path renders the same shell; React Router handles the rest.
+Route::view('/{path?}', 'app')
+    ->where('path', '^(?!api(?:/|$)).*$')
+    ->name('spa');
