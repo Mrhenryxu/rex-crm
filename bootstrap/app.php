@@ -1,13 +1,17 @@
 <?php
 
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
+        api: __DIR__.'/../routes/api.php',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
@@ -18,4 +22,18 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
+
+        // The default message names the model class and IDs; return a plain message instead.
+        $exceptions->render(function (NotFoundHttpException $exception, Request $request) {
+            if (! $request->is('api/*')) {
+                return null;
+            }
+
+            $previous = $exception->getPrevious();
+            $message = $previous instanceof ModelNotFoundException
+                ? Str::ucfirst(Str::snake(class_basename($previous->getModel()), ' ')).' not found.'
+                : 'The requested resource was not found.';
+
+            return response()->json(['message' => $message], 404);
+        });
     })->create();
