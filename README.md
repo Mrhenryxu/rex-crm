@@ -1,81 +1,115 @@
 # Rex CRM
 
-A Laravel 13 (PHP 8.5) modular monolith with a React + Mantine SPA. The first module, Contacts (`app/Features/Contacts`), stores contacts and places mock phone calls through a JSON API (`/api/v1`) and Artisan commands.
+A CRM Contacts application built with Laravel 13, PHP 8.5, React, TypeScript and Mantine UI. The application uses a modular monolith architecture, with Contacts as the first business feature.
 
-## Setup
+## Getting Started
 
-Prerequisites: Docker with Docker Compose. PHP, Composer and Node.js run inside the containers.
+### Prerequisites
 
-| Container       | Purpose                                                    | Host port  |
-| --------------- | ---------------------------------------------------------- | ---------- |
-| `rex-crm`       | Laravel app (`php artisan serve`), Composer, Node.js, Vite | 8000, 5173 |
-| `rex-crm-queue` | Queue worker (`queue:listen`, `database` driver)           | none       |
-| `rex-crm-pgsql` | PostgreSQL 18 (`rex_crm`, and `rex_crm_testing` for tests) | 5432       |
+- Docker and Docker Compose
 
-```sh
+PHP, Composer, Node.js and PostgreSQL are provided through the Docker environment.
+
+### Start the application
+
+```bash
 docker compose up -d
 ```
 
-On start, the `rex-crm` container runs these steps (`docker/app/entrypoint.sh`):
+The application entrypoint handles environment initialisation, dependency installation, application key generation, database migrations, local seed data and frontend asset compilation.
 
-1. It creates `.env` from `.env.example` if `.env` is missing. These are local development defaults only, so change the DB password outside local use.
-2. It runs `composer install`.
-3. It runs `npm ci`, but only when `package-lock.json` has changed.
-4. It generates `APP_KEY` if it isn't set.
-5. It runs the migrations.
-6. When `APP_ENV=local`, it seeds demo data: 50 AU/NZ contacts and their calls (`database/seeders/ContactSeeder.php`). Seeding is skipped if any contacts already exist. To start again, run `docker compose exec rex-crm php artisan migrate:fresh --seed`.
-7. It builds the frontend assets.
+Once started, access the application at:
 
-The first start takes a few minutes; restarts take seconds. Follow progress with `docker compose logs -f rex-crm`. The queue worker starts once the app is healthy. Then open http://localhost:8000.
+- Frontend: http://localhost:8000
 
-- After changing the Dockerfile or the entrypoint script, run `docker compose up -d --build`.
-- Host ports can be changed with `APP_PORT`, `VITE_PORT` and `FORWARD_DB_PORT`.
+For a fresh local database:
 
-- Hot reload instead of a build: `docker compose exec rex-crm npm run dev`
-- Queue worker: runs in `rex-crm-queue` and processes async calls. Logs: `docker compose logs -f rex-crm-queue`
-- Stop: `docker compose down` (add `-v` to delete the database volume)
-
-Optional `.env` settings, with defaults, are in `config/contacts.php`: page size (15, maximum 100), per-IP rate limits per minute (read 120, write 30, calls 10) and cache TTLs. The cache uses the configured `database` store. It caches contact details and unfiltered listing pages only. On the database store, a cache hit is still a database query, so the gain is small.
-
-## Testing
-
-```sh
-docker compose exec rex-crm php artisan test               # backend (PHPUnit, against rex_crm_testing)
-docker compose exec rex-crm npm test                       # frontend (Vitest + Testing Library)
-docker compose exec rex-crm npm run typecheck              # TypeScript strict mode
-docker compose run --rm playwright                         # end-to-end smoke test (needs npm run build first)
-docker compose exec rex-crm vendor/bin/pint --test         # PHP code style
+```bash
+docker compose exec rex-crm php artisan migrate:fresh --seed
 ```
 
-The end-to-end test runs in the official Playwright image against the running app and development database, and deletes the records it creates.
+### Testing commands
 
-## CLI commands
+```bash
+# Backend tests
+docker compose exec rex-crm php artisan test
 
-```sh
-docker compose exec rex-crm php artisan contacts:upsert --first-name=Jane --last-name=Citizen --email=jane@example.com --phone=+61412345678
-docker compose exec rex-crm php artisan contacts:upsert --id=<uuid> --first-name=Jane --last-name=Citizen --phone=+6421123456
-docker compose exec rex-crm php artisan contacts:show <uuid>
-docker compose exec rex-crm php artisan contacts:search --name="jo smi" --email-domain=example.com --sort=created_at --direction=desc --page=1 --per-page=25
-docker compose exec rex-crm php artisan contacts:call <uuid> [--sync]
-docker compose exec rex-crm php artisan contacts:delete <uuid> [--force]
+# Frontend tests
+docker compose exec rex-crm npm test
+
+# TypeScript checks
+docker compose exec rex-crm npm run typecheck
+
+# Code style
+docker compose exec rex-crm vendor/bin/pint --test
+
+# End-to-end tests
+docker compose run --rm playwright
 ```
 
-- `contacts:upsert` without `--id` updates the contact with the same email, otherwise creates one. Email or phone is required, and phones must be AU/NZ E.164.
-- `contacts:call` queues the call by default. `--sync` places it now and prints the outcome.
-- `contacts:delete` asks for confirmation unless `--force` is given.
-- Exit codes: `0` success, `1` failure (for example, contact not found), `2` invalid input.
+Run `npm run build` before executing the Playwright suite if the environment requires a production asset build.
 
-## Test coverage
+## Architecture and Design Decisions
 
-These areas are covered. No coverage percentage has been measured.
+### Modular monolith
 
-- **Validation:** required names, email-or-phone, AU/NZ E.164 phones, email normalisation, search parameter validation, and the same messages from the API and the CLI.
-- **Actions:** upsert by email, update by UUID, duplicate-email conflict, delete with calls, latest 10 calls, filters, sort allow-list, pagination limits, stable ordering, and query counts.
-- **Database:** UUID keys, CHECK and unique constraints, cascade delete, and transaction rollback.
-- **Calls and queue:** every outcome, dispatch only after commit, idempotent processing, a missing call as a no-op, 3 attempts, and the `failed()` handling.
-- **API:** every endpoint, status codes, JSON shape, UTC timestamps, and 404, 409, 422, 429 and 500 responses without internal details.
-- **Rate limiting:** separate read, write and call limits, per-IP tracking, and reset after the window.
-- **Caching:** cache hits, invalidation after commit, and no invalidation on rollback.
-- **CLI:** every command, its output, exit codes and delete confirmation.
-- **Frontend:** the shell, collapsible navigation, theme switch, initials avatars, Search and Clear, backend query parameters, forms and phone input, backend errors, loading and empty states, and the call and delete flows.
-- **End-to-end:** create, search, paginate, sort, call and delete.
+I checked the Rex CRM website and have this idea how it should work. Thus, the application is structured as a modular monolith, with the Contacts feature located under `app/Features/Contacts`. Frontend is under `resources/js/features/contacts` and shared components.
+
+This keeps related business logic together while retaining a single Laravel application, database and deployment unit. It provides clear feature boundaries without introducing the operational complexity of microservices or separate packages.
+
+The structure also leaves room for additional business features as requirements evolve.
+
+### Reusable business logic
+
+Business operations are implemented as reusable Actions. HTTP controllers, Artisan commands and queued jobs act as entry points and delegate to the same business logic.
+
+This avoids duplicating business rules across different interfaces and allows operations to be executed synchronously or asynchronously.
+
+Controllers and commands are intentionally kept thin. I avoided introducing repository classes, generic service layers or additional abstractions where Laravel and Eloquent already provide the required functionality.
+
+### Data integrity and transactions
+
+Database transactions are used for operations involving multiple related records. Database constraints provide an additional layer of protection for data integrity.
+
+Contact deletion also removes associated call records through the configured relationship and database behaviour.
+
+UUIDs are used as externally exposed identifiers, avoiding the need to expose sequential database identifiers through the application interfaces. UUIDs are identifiers, not a substitute for authorisation.
+
+### API and frontend separation
+
+The backend is the source of truth for validation, business rules, filtering, sorting and pagination.
+
+The React SPA communicates through the versioned `/api/v1` API. Search and listing operations are processed by the backend rather than relying on frontend-only filtering.
+
+Mantine provides the frontend component foundation, with TypeScript helping maintain consistency across API data and UI components.
+
+### Laravel-native capabilities
+
+Where practical, the implementation uses Laravel's built-in features for validation, database transactions, queues, caching, rate limiting and Artisan commands.
+
+This reduces external dependencies and keeps the application aligned with the Laravel ecosystem.
+
+## Future Improvements
+
+The implementation prioritises the assessment requirements and a maintainable foundation within the available development time.
+
+Given more time or a broader production scope, I would consider the following improvements:
+
+- **Authentication and authorisation:** Add user authentication, permissions and tenant isolation before exposing the application to multiple customers. These were intentionally excluded from the assessment scope.
+- **Phone validation:** The current AU/NZ validation implements the required format and numbering rules. Integrating a maintained phone-number metadata library would provide more comprehensive numbering-plan validation and better support for future countries.
+- **Caching:** The current database-backed cache provides limited performance benefits. I would benchmark actual usage and consider Redis or another dedicated cache store if the workload justified it.
+- **Observability:** Introduce structured logging, monitoring and alerting for API failures, queue processing and application performance.
+- **Automated testing:** Expand end-to-end coverage, accessibility checks and browser compatibility testing, particularly around more complex user workflows.
+- **Performance:** Review query plans and production usage metrics to refine indexes, caching and pagination strategies as data volumes grow.
+
+I have deliberately avoided implementing speculative features or introducing infrastructure that is not justified by the current requirements.
+
+## Development Approach and AI Tooling
+
+Kiro IDE was used as the primary AI-assisted development environment. Approx 600 tokens used.
+
+The development process used project steering files and focused Skills to establish requirements, architecture, coding conventions and implementation guidance before generating code.
+
+AI assistance was used for implementation support, test generation and code review. Generated code and recommendations were reviewed against the requirements, project conventions and test results rather than accepted without verification.
+
+The implementation decisions and trade-offs are documented here to make the solution easier to review and extend.
