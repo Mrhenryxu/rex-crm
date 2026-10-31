@@ -13,17 +13,22 @@ Prerequisites: Docker with Docker Compose. PHP, Composer and Node.js run inside 
 | `rex-crm-pgsql` | PostgreSQL 18 (`rex_crm`, and `rex_crm_testing` for tests) | 5432       |
 
 ```sh
-cp .env.example .env            # local development defaults only; change the DB password outside local use
-docker compose build
 docker compose up -d
-docker compose exec rex-crm composer install
-docker compose exec rex-crm npm install
-docker compose exec rex-crm php artisan key:generate
-docker compose exec rex-crm php artisan migrate
-docker compose exec rex-crm npm run build
 ```
 
-Open http://localhost:8000. Host ports can be changed with `APP_PORT`, `VITE_PORT` and `FORWARD_DB_PORT`.
+On start, the `rex-crm` container runs these steps (`docker/app/entrypoint.sh`):
+
+1. It creates `.env` from `.env.example` if `.env` is missing. These are local development defaults only, so change the DB password outside local use.
+2. It runs `composer install`.
+3. It runs `npm ci`, but only when `package-lock.json` has changed.
+4. It generates `APP_KEY` if it isn't set.
+5. It runs the migrations.
+6. It builds the frontend assets.
+
+The first start takes a few minutes; restarts take seconds. Follow progress with `docker compose logs -f rex-crm`. The queue worker starts once the app is healthy. Then open http://localhost:8000.
+
+- After changing the Dockerfile or the entrypoint script, run `docker compose up -d --build`.
+- Host ports can be changed with `APP_PORT`, `VITE_PORT` and `FORWARD_DB_PORT`.
 
 - Hot reload instead of a build: `docker compose exec rex-crm npm run dev`
 - Queue worker: runs in `rex-crm-queue` and processes async calls. Logs: `docker compose logs -f rex-crm-queue`

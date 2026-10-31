@@ -20,20 +20,30 @@ services:
   rex-crm:
     <<: *app
     container_name: rex-crm
+    environment:
+      # Runs composer/npm install, .env and APP_KEY creation, migrations and the asset build on start.
+      RUN_SETUP: "1"
     ports:
       - "${APP_PORT:-8000}:8000"
       - "${VITE_PORT:-5173}:5173"
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8000/up"]
-      interval: 10s
+      interval: 5s
       timeout: 5s
       retries: 5
-      start_period: 10s
+      # The first start installs dependencies, so allow time before failures count.
+      start_period: 10m
 
   rex-crm-queue:
     <<: *app
     container_name: rex-crm-queue
     command: ["php", "artisan", "queue:listen", "--tries=3", "--timeout=60"]
+    # Starts once setup in `rex-crm` has finished and the app answers /up.
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rex-crm:
+        condition: service_healthy
 
   # End-to-end tests only: `docker compose run --rm playwright`. Keep the tag in step with @playwright/test.
   playwright:

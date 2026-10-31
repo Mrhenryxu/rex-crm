@@ -12,10 +12,10 @@ ENV DEBIAN_FRONTEND=noninteractive \
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-        ca-certificates curl git unzip gnupg \
-        php8.5-cli php8.5-pgsql php8.5-sqlite3 php8.5-mbstring php8.5-xml \
-        php8.5-curl php8.5-zip php8.5-intl php8.5-bcmath \
-        postgresql-client \
+    ca-certificates curl git unzip gnupg \
+    php8.5-cli php8.5-pgsql php8.5-sqlite3 php8.5-mbstring php8.5-xml \
+    php8.5-curl php8.5-zip php8.5-intl php8.5-bcmath \
+    postgresql-client \
     && curl -fsSL "https://deb.nodesource.com/setup_${NODE_MAJOR}.x" | bash - \
     && apt-get install -y --no-install-recommends nodejs \
     && apt-get clean \
@@ -29,9 +29,13 @@ RUN groupmod -o -g "${GID}" ubuntu \
     && mkdir -p /var/www/html "${COMPOSER_HOME}" \
     && chown -R ubuntu:ubuntu /var/www/html /home/ubuntu
 
+# Installs dependencies, creates .env and APP_KEY, migrates and builds assets on start (see the script).
+COPY --chmod=755 docker/app/entrypoint.sh /usr/local/bin/rex-crm-entrypoint
+
 WORKDIR /var/www/html
 USER ubuntu
 
 EXPOSE 8000 5173
 
+ENTRYPOINT ["rex-crm-entrypoint"]
 CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
