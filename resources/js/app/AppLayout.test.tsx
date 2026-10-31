@@ -7,7 +7,12 @@ describe('CRM shell', () => {
         renderApp('/contacts');
 
         const banner = screen.getByRole('banner');
-        expect(within(banner).getByText('Rex CRM')).toBeInTheDocument();
+        const home = within(banner).getByRole('link', { name: 'Rex CRM home' });
+        expect(home).toHaveAttribute('href', '/contacts');
+        // The Rex logo SVG is decorative inside the labelled link.
+        const logo = within(home).getByTestId('rex-logo').querySelector('svg');
+        expect(logo).toHaveAttribute('aria-hidden', 'true');
+        expect(logo).toHaveAttribute('viewBox', '0 0 113 28');
         expect(within(banner).getByRole('button', { name: /switch to (dark|light) mode/i })).toBeInTheDocument();
         expect(screen.getByRole('navigation', { name: 'Main navigation' })).toBeInTheDocument();
         expect(screen.getByRole('main')).toBeInTheDocument();
