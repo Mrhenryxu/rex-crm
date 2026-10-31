@@ -18,6 +18,10 @@ A React SPA that uses most of the Contacts API. The brief asks for pragmatic, st
 - Do not build a parallel component library or styling system.
 - Styling order: Mantine component props, then the Mantine theme (`createTheme`: colours, spacing, radius, fonts, component defaults), then Mantine style props or CSS modules for what the theme cannot express.
 - Import `@mantine/core/styles.css` once in the SPA entry point. Wrap the app in `MantineProvider` with the shared theme.
+- The theme (`resources/js/app/theme.ts`) uses tokens taken from rexsoftware.com: mint `#3DE0BF` primary, text `#1C1A33`, navy `#0F2B66` headings, wheat `#F7F5F1` page surface, `#E6E2D8` borders, and Inter with Sofia Sans Extra Condensed for headings (self-hosted with `@fontsource`, SIL OFL). Use theme colours and CSS variables, never hard-coded HEX values in components.
+- Mint fails contrast as text on white (1.7:1). Don't use `c="rex"` or mint links in light mode. Filled mint buttons get dark text through `autoContrast`.
+- Rex-specific styles the theme object can't express (button hover, focus ring, heading colour, page surface) live in `resources/js/app/theme.module.css`.
+- Don't use the Rex logo without permission; the header keeps the generic icon with "Rex CRM" text.
 - The existing Tailwind packages and `resources/css/app.css` stay installed but are not used by the SPA. Do not add Tailwind classes or utilities to React components. Make sure Tailwind's base reset does not load on SPA pages, so it cannot override Mantine styles.
 
 ## App shell

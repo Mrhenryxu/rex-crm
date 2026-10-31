@@ -1,0 +1,36 @@
+/* Rex styles that the Mantine theme object cannot express. Values reference theme CSS variables. */
+
+/* Focus ring: --focus--width 0.125rem, --focus--offset-outer 0.1875rem. Keyboard focus only. */
+.focus:focus-visible {
+    outline: 0.125rem solid var(--rex-focus-color);
+    outline-offset: 0.1875rem;
+}
+
+/* Filled buttons (Mantine omits data-variant for the default "filled" variant): semi-bold label, ~1.5px border (--border-width--main) and Rex's hover. */
+.button:where(:not([data-variant]), [data-variant='filled']) {
+    border-width: 0.094rem;
+    font-weight: 600;
+    transition:
+        background-color 0.2s,
+        color 0.2s,
+        border-color 0.2s;
+}
+
+/* Mantine sets --button-hover inline per button, so set the colours directly (higher specificity than Mantine's hover rule). */
+@media (hover: hover) {
+    .button:where(:not([data-variant]), [data-variant='filled']):not(:disabled, [data-disabled], [data-loading]):hover {
+        background-color: var(--rex-button-hover-bg);
+        border-color: var(--rex-button-hover-bg);
+        color: var(--rex-button-hover-color);
+    }
+}
+
+/* Headings use Rex's accent: navy in light mode, mint in dark mode. */
+.title {
+    color: var(--rex-heading-color);
+}
+
+/* Page background behind cards: wheat in light mode (--_theme---background-2). */
+.main {
+    background-color: var(--rex-surface);
+}
