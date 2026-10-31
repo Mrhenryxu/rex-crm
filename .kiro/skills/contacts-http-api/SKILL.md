@@ -20,10 +20,9 @@ Exposes the Contacts Actions over HTTP to the SPA and to third-party consumers. 
 | ----------- | ---------------------------------------------- | --------------- | ------------------------------------------------- |
 | GET         | `/contacts`                                    | SearchContacts  | 200, paginated                                    |
 | GET         | `/contacts/{contact}`                          | read            | 200                                               |
-| PUT or POST | upsert (path depends on the identity decision) | UpsertContact   | 201 created / 200 updated                         |
+| POST / PUT  | `/contacts` / `/contacts/{contact}`            | UpsertContact   | 201 created or 200 updated / 200                  |
 | DELETE      | `/contacts/{contact}`                          | DeleteContact   | 204                                               |
 | POST        | `/contacts/{contact}/calls`                    | call initiation | 202 async / 201 sync (see `contacts-calls-queue`) |
-| GET         | `/contacts/{contact}/calls`                    | call history    | 200, paginated                                    |
 
 ## Requests
 
@@ -41,7 +40,7 @@ Exposes the Contacts Actions over HTTP to the SPA and to third-party consumers. 
 ## Errors (informative for third parties)
 
 - 422: Laravel's `{ message, errors: { field: [...] } }` with field-specific messages, including for invalid query parameters.
-- 404: replace the default `ModelNotFoundException` message, which leaks the model class name, with `Contact not found.` in `withExceptions()`.
+- 404: replace the default `ModelNotFoundException` message, which leaks the model class name, with `Contact not found.` in `withExceptions()`. Other API 404s return `The requested resource was not found.`
 - 409: upsert unique conflict, from the domain exception.
 - 429: a short JSON message such as `Too many requests. Try again in N seconds.` plus the `Retry-After` and `X-RateLimit-*` headers. Do not reveal how the limiter is keyed.
 - 500 responses never include stack traces or SQL outside debug mode.

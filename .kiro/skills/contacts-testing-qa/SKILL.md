@@ -22,7 +22,7 @@ tests/Feature/Contacts/   Actions (DB), HTTP endpoints, Artisan commands, jobs
 
 ## Test database
 
-- `phpunit.xml` currently uses SQLite in memory. Contacts relies on PostgreSQL behaviour (`ILIKE`, CHECK constraints, expression or trigram indexes), so run the suite against PostgreSQL. The connection switch is pending, together with the Docker Compose setup.
+- `phpunit.xml` uses the PostgreSQL database `rex_crm_testing`, because Contacts relies on PostgreSQL behaviour (CHECK constraints, `text_pattern_ops` expression indexes, row locks).
 - Never weaken a test or drop a constraint to make the suite pass on SQLite.
 
 ## Required coverage (summary)
@@ -42,7 +42,7 @@ tests/Feature/Contacts/   Actions (DB), HTTP endpoints, Artisan commands, jobs
 ## Frontend
 
 - The frontend test cases (Playwright workflows and form validation) are listed in `contacts-frontend`.
-- Component and form-validation tests need a runner (for example Vitest and Testing Library). That is a new dependency and needs approval.
+- Component and form-validation tests use Vitest and Testing Library (`npm test`). Render with `env="test"` (see `resources/js/test/render.tsx`) so Mantine transitions and portals are off.
 - Query elements by role and label, which also checks the accessible labels.
 
 ## README (short and operational)
@@ -57,7 +57,7 @@ When test commands or setup change, update the README in the same change.
 
 ## Running and reporting
 
-- Backend: `php artisan test` (through Docker Compose once it exists). Frontend: the scripts defined in `package.json`.
+- Commands are in `README.md`: `php artisan test`, `npm test`, `npm run typecheck` and `docker compose run --rm playwright`, all through Docker Compose.
 - Report tests as passing only after running them, and quote the result.
 
 ## Pre-PR checklist

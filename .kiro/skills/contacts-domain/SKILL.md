@@ -63,9 +63,10 @@ Add an index only for a query the API or UI actually runs, and confirm it agains
 ## Cache keys
 
 - Use the `Cache` facade with the configured driver. No Redis infrastructure and no third-party packages unless a measured need justifies it.
-- Single read: `contacts:{id}`.
-- Search results, only for repeated queries that suit caching (see `contacts-actions`): `contacts:search:v{version}:{hash}`. The hash covers every input that changes the result: normalised filters, sort, direction, page or cursor, and page size.
-- `contacts:search:version` is a counter that write Actions increment to invalidate all cached searches at once. The default `database` store has no tags, so do not use tags.
+- All keys live in `App\Features\Contacts\Support\ContactCache`. Cache raw attribute arrays, not models (`cache.serializable_classes` is `false`).
+- Contact detail with latest calls: `contacts:detail:{id}`.
+- Unfiltered listing pages only: `contacts:list:{version}:{hash}`. The hash covers every input that changes the result: filters, sort, direction, page and page size.
+- `contacts:list:version` is a random token replaced after every contact write, which invalidates all cached pages at once. The default `database` store has no tags, so do not use tags.
 - Always set an explicit TTL.
 
 ## Decisions

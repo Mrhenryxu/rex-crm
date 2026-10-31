@@ -11,34 +11,28 @@ The brief requires that contacts can be called, with "a phone call placed — do
 
 ## Flow
 
-1. `InitiateContactCall` Action: inside a transaction, check the contact has a phone, create a `ContactCall` (UUID primary key, table `contact_calls`) with status `pending` and a snapshot of the E.164 number, and return it. In async mode, dispatch the job with `DB::afterCommit` (or `->afterCommit()` on dispatch).
-2. `CompleteContactCall` Action: ask the mock dialler for an outcome, then store `outcome`, `status` and `completed_at` in a transaction.
-3. Sync path (`--sync` on the CLI, or the HTTP option if approved): call 1 then 2 in the same request.
-4. Async path: `PlaceContactCallJob` calls `CompleteContactCall`. The job holds no logic of its own.
+1. `PlaceContactCall` Action: inside a transaction, check the contact has a phone (else `ContactHasNoPhone`, HTTP 422, CLI `FAILURE`), create a pending `ContactCall` with a snapshot of the E.164 number, and register cache invalidation after commit. In async mode it dispatches `ProcessContactCallJob` with `->afterCommit()`.
+2. `ProcessContactCall` Action: locks the call row, asks `CallSimulator` for an outcome, and stores `status`, `outcome` and `completed_at`. A missing or non-pending call is returned unchanged (idempotent).
+3. Sync path (`mode=sync` over HTTP, `--sync` on the CLI): step 1, then step 2 in the same request. If step 2 throws, `MarkContactCallFailed` marks the call failed and the error is rethrown.
+4. Async path: `ProcessContactCallJob` calls `ProcessContactCall`. The job holds no logic of its own.
 
-HTTP, CLI and job all use these two Actions. Nothing else changes call state.
+HTTP, CLI and the job use these Actions. Nothing else changes call state.
 
-## Mock dialler
+## Call simulator
 
-- One small concrete class in the feature (for example `MockDialler`) with `dial(string $e164): CallOutcome`. Do not add an interface or a provider abstraction until a real telephony integration exists.
-- Outcomes must be deterministic when tested. Tests swap the instance through the container (`$this->instance(MockDialler::class, …)`) or seed the randomness.
-- `CallOutcome` is a backed string enum. The list of outcomes is an open decision. The brief only says "possible outcomes". A plausible set to confirm is answered, no answer, busy, voicemail and failed. Do not ship the set until it is approved.
-- A contact with no phone cannot be called. Throw a domain exception that maps to HTTP 422 and CLI `FAILURE`.
+- `App\Features\Contacts\Support\CallSimulator::simulate(string $phone): CallOutcome` picks a random outcome. It is a concrete, non-final class so tests can swap it with `$this->mock(CallSimulator::class)`. Do not add an interface until a real telephony integration exists.
 
 ## Job
 
-- `final class PlaceContactCallJob implements ShouldQueue`, using the `Queueable` trait. Pass the `ContactCall` model (serialised as an ID) to the constructor.
-- Make it idempotent: if the call is no longer `pending`, return without changes. This makes retries and duplicate deliveries safe.
-- Set `$tries` and `$backoff` explicitly. Implement `failed(Throwable $e)` to mark the call `failed` through an Action, so state never stays `pending` forever.
-- If the contact is deleted before the job runs, follow the delete decision. Use `$deleteWhenMissingModels = true` if calls cascade on delete.
-- The queue connection is `database` (core Laravel). No Redis/Horizon packages.
+- `final class ProcessContactCallJob implements ShouldQueue` with `Queueable`. The constructor takes the call UUID (`string $callId`), not the model, so a deleted call is a no-op rather than a `ModelNotFoundException`.
+- `$tries = 3`, `$backoff = [10, 30]`. `failed()` calls `MarkContactCallFailed`, which only changes a still-pending call.
+- The queue connection is `database` (core Laravel). No Redis or Horizon.
 
 ## API and CLI contract
 
 - Async HTTP response: `202 Accepted` with the pending `ContactCallResource`. Sync: `201` with the completed call.
-- The call-history endpoint and `contacts:show` expose status and outcome. See `contacts-http-api` and `contacts-cli`.
-- Calls use the strictest rate limiter (`contacts-calls`). It returns 429 with `Retry-After` when exceeded.
-- Responses, the CLI and the job identify calls and contacts by their UUID `id`. The job payload carries the model, which serialises to that UUID.
+- `GET /contacts/{contact}` (`latest_calls`) and `contacts:show` expose the latest 10 calls with status and outcome.
+- Calls use the strictest rate limiter (`contacts-calls`), which returns 429 with `Retry-After`.
 
 ## Decisions
 
@@ -49,8 +43,8 @@ HTTP, CLI and job all use these two Actions. Nothing else changes call state.
 
 ## Testing expectations
 
-- Unit/feature tests for both Actions with a deterministic dialler, one test per outcome.
-- `Queue::fake()`: initiation pushes `PlaceContactCallJob` with the right call, and nothing is pushed when the transaction rolls back.
+- One test per outcome with a mocked `CallSimulator`.
+- Dispatch after commit: use the real `database` queue driver and assert the `jobs` table, because `Queue::fake()` ignores `afterCommit`.
 - Running the job directly stores the outcome. Running it a second time changes nothing (idempotency).
 - `failed()` marks the call failed.
 - Calling a contact without a phone is rejected with an informative error.

@@ -21,10 +21,10 @@ Actions are the only place Contacts business operations run. HTTP controllers, A
 
 | Action           | Responsibility                                                                                                                             |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| `UpsertContact`  | Create or update one contact. Returns the contact and whether it was created (for 201 vs 200).                                             |
+| `UpsertContact`  | Create or update one contact. Returns `UpsertContactResult` (contact and `created` flag, for 201 vs 200).                                  |
 | `DeleteContact`  | Delete one contact by its UUID `id`. Handles call history according to the delete decision in `contacts-domain`.                           |
 | `SearchContacts` | Filtered, sorted, paginated query, with optional caching.                                                                                  |
-| Read             | Route-model binding by UUID `id` plus the single-contact cache. Add a `FindContact` Action only if HTTP and CLI both need the cached read. |
+| Read             | Route-model binding by UUID `id` plus the single-contact cache. `GetContactDetails` returns the contact with its latest 10 calls through the cache. |
 | Call Actions     | See `contacts-calls-queue`.                                                                                                                |
 
 Do not add Actions the requirements don't need (bulk import, merge, restore).
@@ -55,10 +55,10 @@ The backend owns filtering, searching, sorting and pagination. The frontend only
 
 ## Caching
 
-- Single contact: cache by `id`. Forget `contacts:{id}` after commit on every write and delete.
+- Contact detail (with latest calls): forget `contacts:detail:{id}` after commit on every contact write, delete and call change.
 - Search: cache only repeated queries that suit caching, for example the default unfiltered listing and its first pages. Do not cache every unique search.
 - Search cache keys must cover every input that changes the result (see the key format in `contacts-domain`).
-- Invalidate search results by incrementing `contacts:search:version` after commit on every write.
+- Invalidate cached listing pages by replacing `contacts:list:version` after commit on every contact write. Use `ContactCache`; do not build keys elsewhere.
 - Use the native `Cache` API and the configured driver. Measure hit rate and query cost before caching more.
 
 ## Testing expectations

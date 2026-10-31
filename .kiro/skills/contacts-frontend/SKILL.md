@@ -19,7 +19,6 @@ A React SPA that uses most of the Contacts API. The brief asks for pragmatic, st
 - Styling order: Mantine component props, then the Mantine theme (`createTheme`: colours, spacing, radius, fonts, component defaults), then Mantine style props or CSS modules for what the theme cannot express.
 - Import `@mantine/core/styles.css` once in the SPA entry point. Wrap the app in `MantineProvider` with the shared theme.
 - The existing Tailwind packages and `resources/css/app.css` stay installed but are not used by the SPA. Do not add Tailwind classes or utilities to React components. Make sure Tailwind's base reset does not load on SPA pages, so it cannot override Mantine styles.
-- All of these packages are new dependencies. Install them only after approval.
 
 ## App shell
 

@@ -37,7 +37,8 @@ describe('Contact create and edit forms', () => {
         const post = requests.find((request) => request.method === 'POST')!;
         expect(post.url.pathname).toBe('/api/v1/contacts');
         expect(post.body).toEqual({ first_name: 'Jane', last_name: 'Citizen', email: null, phone: '+61412345678' });
-        expect(screen.getByRole('heading', { name: 'Jane Citizen' })).toBeInTheDocument();
+        // The notice renders before the contact has loaded, so wait for the heading.
+        expect(await screen.findByRole('heading', { name: 'Jane Citizen' })).toBeInTheDocument();
     });
 
     test('says when the email matched an existing contact', async () => {
