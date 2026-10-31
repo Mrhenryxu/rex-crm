@@ -62,7 +62,7 @@ When test commands or setup change, update the README in the same change.
 
 ## Pre-PR checklist
 
-- `vendor/bin/pint --test` is clean.
+- `vendor/bin/pint --dirty --format agent` has been run on changed PHP files (see `AGENTS.md`).
 - The backend suite passes against PostgreSQL, and the Playwright suite passes.
 - No secrets in `.env.example`, fixtures or logs.
 - The README follows the scope above.

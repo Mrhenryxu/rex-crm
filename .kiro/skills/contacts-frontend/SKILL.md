@@ -15,8 +15,10 @@ A React SPA that uses most of the Contacts API. The brief asks for pragmatic, st
 - Mantine as the primary UI component system. Use its theme and colour-scheme features for light/dark mode.
 - React Hook Form for form state, with Zod schemas for validation and type inference.
 - A maintained phone-number library for AU/NZ country selection, formatting and input help.
-- Do not build a parallel component library or styling system. Use Mantine components and theme tokens before writing custom CSS.
-- Tailwind (`tailwindcss-development` skill, current Vite setup) and the dark-only theme in `tech.md` stay as they are for now. Do not add new Tailwind styling that duplicates what a Mantine component or prop already does.
+- Do not build a parallel component library or styling system.
+- Styling order: Mantine component props, then the Mantine theme (`createTheme`: colours, spacing, radius, fonts, component defaults), then Mantine style props or CSS modules for what the theme cannot express.
+- Import `@mantine/core/styles.css` once in the SPA entry point. Wrap the app in `MantineProvider` with the shared theme.
+- The existing Tailwind packages and `resources/css/app.css` stay installed but are not used by the SPA. Do not add Tailwind classes or utilities to React components. Make sure Tailwind's base reset does not load on SPA pages, so it cannot override Mantine styles.
 - All of these packages are new dependencies. Install them only after approval.
 
 ## App shell
