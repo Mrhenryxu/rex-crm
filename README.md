@@ -1,58 +1,48 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Rex CRM
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A Laravel 13 (PHP 8.5) modular monolith with a React frontend. The first module is Contacts.
 
-## About Laravel
+## Prerequisites
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- Docker with Docker Compose. PHP, Composer and Node.js run inside the containers, so you don't need them on the host.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+The stack (`docker-compose.yaml`, Compose project `rex-crm`):
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+| Container       | Purpose                                                       | Host port  |
+| --------------- | ------------------------------------------------------------- | ---------- |
+| `rex-crm`       | Laravel app (`php artisan serve`), Composer, Node.js 26, Vite | 8000, 5173 |
+| `rex-crm-queue` | Queue worker (`queue:listen`, `database` driver)              | none       |
+| `rex-crm-pgsql` | PostgreSQL 18, with databases `rex_crm` and `rex_crm_testing` | 5432       |
 
-## Learning Laravel
+You can change the host ports with `APP_PORT`, `VITE_PORT` and `FORWARD_DB_PORT`.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## Setup
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
-
-```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+```sh
+cp .env.example .env
+docker compose build
+docker compose up -d
+docker compose exec rex-crm composer install
+docker compose exec rex-crm npm install
+docker compose exec rex-crm php artisan key:generate
+docker compose exec rex-crm php artisan migrate
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+The database credentials in `.env.example` are local development defaults only.
 
-## Contributing
+## Running
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+- App: http://localhost:8000. Health check: http://localhost:8000/up.
+- Frontend dev server with hot reload: `docker compose exec rex-crm npm run dev`
+- Production asset build: `docker compose exec rex-crm npm run build`
+- Queue worker logs: `docker compose logs -f rex-crm-queue`
+- Stop the stack: `docker compose down`. Add `-v` to also delete the database volume.
 
-## Code of Conduct
+## Testing
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+The PHPUnit suite runs against the PostgreSQL database `rex_crm_testing`, as set in `phpunit.xml`.
 
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```sh
+docker compose exec rex-crm php artisan test
+docker compose exec rex-crm vendor/bin/pint --test
+```
