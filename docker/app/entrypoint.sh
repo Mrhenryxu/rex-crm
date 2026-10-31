@@ -32,6 +32,12 @@ if [ "${RUN_SETUP:-0}" = "1" ]; then
     echo "[setup] Running migrations"
     php artisan migrate --force --no-interaction
 
+    # Demo data for local development only. The seeder skips itself when contacts already exist.
+    if grep -q '^APP_ENV=local' .env; then
+        echo "[setup] Seeding demo data"
+        php artisan db:seed --no-interaction
+    fi
+
     # A stale "hot" file makes Laravel load assets from a Vite dev server that is not running.
     rm -f public/hot
     echo "[setup] Building frontend assets"

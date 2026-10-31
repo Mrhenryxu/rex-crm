@@ -23,7 +23,8 @@ On start, the `rex-crm` container runs these steps (`docker/app/entrypoint.sh`):
 3. It runs `npm ci`, but only when `package-lock.json` has changed.
 4. It generates `APP_KEY` if it isn't set.
 5. It runs the migrations.
-6. It builds the frontend assets.
+6. When `APP_ENV=local`, it seeds demo data: 50 AU/NZ contacts and their calls (`database/seeders/ContactSeeder.php`). Seeding is skipped if any contacts already exist. To start again, run `docker compose exec rex-crm php artisan migrate:fresh --seed`.
+7. It builds the frontend assets.
 
 The first start takes a few minutes; restarts take seconds. Follow progress with `docker compose logs -f rex-crm`. The queue worker starts once the app is healthy. Then open http://localhost:8000.
 
