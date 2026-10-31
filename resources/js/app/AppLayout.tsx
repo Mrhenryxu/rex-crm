@@ -1,6 +1,6 @@
 import { ActionIcon, AppShell, Burger, Group, NavLink, Stack, Tooltip } from '@mantine/core';
 import { useDisclosure, useLocalStorage, useMediaQuery } from '@mantine/hooks';
-import { IconLayoutSidebarLeftCollapse, IconLayoutSidebarLeftExpand, IconUserPlus, IconUsers, type Icon } from '@tabler/icons-react';
+import { IconLayoutSidebarLeftCollapse, IconLayoutSidebarLeftExpand, IconUsers, type Icon } from '@tabler/icons-react';
 import { useEffect } from 'react';
 import { Link, Outlet, useLocation } from 'react-router';
 import { ColorSchemeToggle } from './ColorSchemeToggle';
@@ -18,18 +18,12 @@ const NAV_ITEMS: NavItem[] = [
         label: 'Contacts',
         to: '/contacts',
         icon: IconUsers,
-        isActive: (pathname) => pathname.startsWith('/contacts') && pathname !== '/contacts/new',
-    },
-    {
-        label: 'New contact',
-        to: '/contacts/new',
-        icon: IconUserPlus,
-        isActive: (pathname) => pathname === '/contacts/new',
+        isActive: (pathname) => pathname.startsWith('/contacts'),
     },
 ];
 
-/** Collapsed navbar: about 5% of the viewport, never narrower than an icon button. */
-const COLLAPSED_NAV_WIDTH = 'max(5vw, 64px)';
+/** Collapsed navbar: just wide enough for a 36px icon item plus the navbar padding. */
+const COLLAPSED_NAV_WIDTH = 56;
 const EXPANDED_NAV_WIDTH = 240;
 
 export function AppLayout() {

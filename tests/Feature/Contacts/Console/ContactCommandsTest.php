@@ -113,7 +113,7 @@ class ContactCommandsTest extends TestCase
         Contact::factory()->create(['first_name' => 'Joan', 'last_name' => 'Adams', 'email' => 'joan@acme.com']);
         Contact::factory()->create(['first_name' => 'Zed', 'last_name' => 'Other', 'email' => 'zed@acme.com']);
 
-        $this->artisan('contacts:search', ['--name' => 'jo', '--email-domain' => 'acme.com', '--sort' => 'first_name', '--per-page' => '1'])
+        $this->artisan('contacts:search', ['--name' => 'jo', '--email' => 'acme.com', '--sort' => 'first_name', '--per-page' => '1'])
             ->expectsOutputToContain('Joan')
             ->expectsOutputToContain('Page 1 of 2 (2 contacts, 1 per page)')
             ->doesntExpectOutputToContain('Zed')

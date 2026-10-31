@@ -34,7 +34,6 @@ A UUID makes enumeration harder. It does not replace authentication, authorisati
 | `first_name`   | Required, not null.                                                                                                                                           |
 | `last_name`    | Required, not null.                                                                                                                                           |
 | `email`        | Nullable. Stored lower-cased (see `contacts-validation`).                                                                                                     |
-| `email_domain` | Nullable, derived from `email` on save (the part after `@`). Exists only so domain search can use an index. Never accepted as input or returned in responses. |
 | `phone`        | Nullable. Stored in canonical E.164 only (`+61…` or `+64…`).                                                                                                  |
 | timestamps     | `created_at`, `updated_at`.                                                                                                                                   |
 
@@ -54,8 +53,7 @@ A UUID makes enumeration harder. It does not replace authentication, authorisati
 Add an index only for a query the API or UI actually runs, and confirm it against the generated SQL (`EXPLAIN`):
 
 - The primary keys already cover lookup by `id`.
-- `phone` btree, for exact search on the normalised E.164 value.
-- `email_domain` btree, for exact search on the stored lower-cased value.
+- No search indexes: name, phone and email filters are contains matches (see Decisions).
 - Names: the index type depends on the match mode. A contains-search with `ILIKE '%term%'` cannot use a btree. Use a btree on `lower(...)` for prefix search, or a `pg_trgm` GIN index for contains-search (needs the extension). Write either with `DB::statement`.
 - Indexes for the allow-listed sort columns, with `id` as the tie-breaker.
 - `contact_calls (contact_id, created_at)` for a contact's call history.
@@ -73,12 +71,12 @@ Add an index only for a query the API or UI actually runs, and confirm it agains
 
 1. One email and one phone per contact.
 2. Business upsert key: the normalised email. `email` has a unique constraint (PostgreSQL allows many NULLs). `phone` is not unique. The UUID `id` identifies a contact for explicit updates, but it is not the upsert key.
-3. Name search: case-insensitive prefix match on first or last name. No `pg_trgm`.
+3. Search: case-insensitive contains match on first/last name, phone and email. Leading-wildcard `LIKE` cannot use btree indexes, so the earlier prefix indexes and the `email_domain` column were dropped. If search volume needs it, a `pg_trgm` GIN index is the next step (needs approval).
 4. Hard delete. `contact_calls.contact_id` uses `cascadeOnDelete`, so deleting a contact removes its calls.
 5. Call outcomes: `answered`, `busy`, `no_answer`, `voicemail`, `failed`. Call status: `pending`, `completed`, `failed`. A `failed` status means processing failed, not the call outcome.
 
 ## Testing expectations
 
 - Factory states: email-only, phone-only, AU phone, NZ phone.
-- Tests that `id` is a generated UUID and used for route binding, `contact_calls.contact_id` references it, `email_domain` is derived, and the CHECK constraint rejects a row with neither email nor phone.
+- Tests that `id` is a generated UUID and used for route binding, `contact_calls.contact_id` references it, email is stored lower-cased, and the CHECK constraint rejects a row with neither email nor phone.
 - Tests for the foreign key behaviour on delete.

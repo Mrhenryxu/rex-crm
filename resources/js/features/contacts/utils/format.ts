@@ -1,14 +1,9 @@
 import { parsePhoneNumberFromString } from 'libphonenumber-js/min';
 import type { CallOutcome, CallStatus } from '../types/contact';
 
-const dateFormatter = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' });
 const dateTimeFormatter = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 
 /** API timestamps are UTC ISO 8601; show them in the viewer's local time. */
-export function formatDate(iso: string): string {
-    return dateFormatter.format(new Date(iso));
-}
-
 export function formatDateTime(iso: string): string {
     return dateTimeFormatter.format(new Date(iso));
 }

@@ -1,6 +1,6 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { makeContact, mockApi, page } from '@/test/api';
+import { makeCall, makeContact, mockApi, page } from '@/test/api';
 import { renderApp } from '@/test/render';
 
 const lastRequest = (requests: { url: URL }[]) => requests[requests.length - 1]!.url;
@@ -18,6 +18,40 @@ describe('Contacts listing', () => {
         expect(within(rows[1]!).getByTestId('contact-avatar')).toHaveTextContent('AN');
         expect(within(rows[2]!).getByTestId('contact-avatar')).toHaveTextContent('JS');
         expect(within(rows[2]!).getByText('+61 412 345 678')).toBeInTheDocument();
+        expect(within(rows[2]!).getByRole('img', { name: 'Australia' })).toBeInTheDocument();
+        expect(within(table).queryByRole('columnheader', { name: 'Added' })).not.toBeInTheDocument();
+        expect(within(table).getByRole('columnheader', { name: 'Actions' })).toBeInTheDocument();
+    });
+
+    test('clicking a row opens the contact', async () => {
+        const user = userEvent.setup();
+        const contact = makeContact();
+        mockApi((request) => (request.url.pathname === '/api/v1/contacts' ? { body: page([contact]) } : { body: { data: { ...contact, latest_calls: [] } } }));
+        renderApp('/contacts');
+
+        await user.click(await screen.findByText('jane@example.com'));
+
+        expect(await screen.findByRole('heading', { name: 'Jane Citizen' })).toBeInTheDocument();
+    });
+
+    test('row actions call the contact or open an email', async () => {
+        const user = userEvent.setup();
+        const requests = mockApi((request) =>
+            request.method === 'POST' ? { status: 201, body: { data: { ...makeCall({ outcome: 'voicemail' }) } } } : { body: page([makeContact(), makeContact({ id: 'b', first_name: 'No', last_name: 'Phone', phone: null })]) },
+        );
+        renderApp('/contacts');
+        await screen.findByRole('table', { name: 'Contacts' });
+
+        expect(screen.getByRole('link', { name: 'Email Jane Citizen' })).toHaveAttribute('href', 'mailto:jane@example.com');
+        expect(screen.getByRole('button', { name: 'Call No Phone' })).toBeDisabled();
+
+        await user.click(screen.getByRole('button', { name: 'Call Jane Citizen' }));
+
+        expect(await screen.findByRole('status')).toHaveTextContent('Called Jane Citizen on +61 412 345 678. Outcome: Voicemail');
+        const post = requests.find((request) => request.method === 'POST')!;
+        expect(post.url.pathname).toBe(`/api/v1/contacts/${makeContact().id}/calls`);
+        // The call action does not open the contact.
+        expect(screen.getByRole('heading', { name: 'Contacts' })).toBeInTheDocument();
     });
 
     test('loads the first page with the default backend parameters', async () => {
@@ -40,7 +74,7 @@ describe('Contacts listing', () => {
 
         await user.type(screen.getByRole('textbox', { name: /^name/i }), 'jo smi');
         await user.type(screen.getByRole('textbox', { name: /^phone/i }), '+61412');
-        await user.type(screen.getByRole('textbox', { name: /^email domain/i }), 'acme.com');
+        await user.type(screen.getByRole('textbox', { name: /^email/i }), 'acme.com');
         expect(requests).toHaveLength(before);
 
         await user.click(screen.getByRole('button', { name: 'Search' }));
@@ -49,7 +83,7 @@ describe('Contacts listing', () => {
         const url = lastRequest(requests);
         expect(url.searchParams.get('name')).toBe('jo smi');
         expect(url.searchParams.get('phone')).toBe('+61412');
-        expect(url.searchParams.get('email_domain')).toBe('acme.com');
+        expect(url.searchParams.get('email')).toBe('acme.com');
         expect(url.searchParams.get('page')).toBe('1');
     });
 
@@ -83,7 +117,6 @@ describe('Contacts listing', () => {
         await waitFor(() => expect(lastRequest(requests).searchParams.get('sort')).toBe('created_at'));
         expect(lastRequest(requests).searchParams.get('direction')).toBe('desc');
         expect(lastRequest(requests).searchParams.get('page')).toBe('1');
-        expect(screen.getByRole('columnheader', { name: 'Added' })).toHaveAttribute('aria-sort', 'descending');
 
         await user.click(screen.getByRole('combobox', { name: 'Contacts per page' }));
         await user.click(await screen.findByRole('option', { name: '50 per page' }));

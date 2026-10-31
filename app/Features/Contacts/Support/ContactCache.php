@@ -111,8 +111,8 @@ final class ContactCache
         // Every value that changes the result is part of the key.
         $parameters = [
             $criteria->name,
-            $criteria->phonePrefix,
-            $criteria->emailDomain,
+            $criteria->phoneDigits,
+            $criteria->email,
             $criteria->sort->value,
             $criteria->direction->value,
             $criteria->page,

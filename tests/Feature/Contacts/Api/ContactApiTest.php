@@ -31,7 +31,6 @@ class ContactApiTest extends TestCase
             ])
             ->assertJsonPath('meta.total', 3)
             ->assertJsonPath('meta.per_page', 2)
-            ->assertJsonMissingPath('data.0.email_domain')
             ->assertJsonMissingPath('data.0.latest_calls');
     }
 
@@ -41,11 +40,11 @@ class ContactApiTest extends TestCase
         Contact::factory()->create(['first_name' => 'Joan', 'last_name' => 'Adams', 'email' => 'joan@acme.com']);
         Contact::factory()->create(['first_name' => 'Jo', 'last_name' => 'Other', 'email' => 'jo@other.com']);
 
-        $response = $this->getJson('/api/v1/contacts?name=jo&email_domain=acme.com&sort=last_name&direction=desc')
+        $response = $this->getJson('/api/v1/contacts?name=jo&email=acme.com&sort=last_name&direction=desc')
             ->assertOk()
             ->assertJsonPath('data.*.first_name', ['John', 'Joan']);
 
-        $this->assertStringContainsString('email_domain=acme.com', (string) $response->json('links.first'));
+        $this->assertStringContainsString('email=acme.com', (string) $response->json('links.first'));
     }
 
     public function test_listing_rejects_invalid_query_parameters_with_field_errors(): void

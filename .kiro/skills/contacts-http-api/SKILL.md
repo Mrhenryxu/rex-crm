@@ -28,11 +28,11 @@ Exposes the Contacts Actions over HTTP to the SPA and to third-party consumers. 
 
 - One Form Request per write and search endpoint, in `Http/Requests/`, using the shared rules from `contacts-validation`.
 - Pass only `$request->validated()` (or typed data built from it) to the Action.
-- Search parameters: `name`, `phone`, `email_domain`, `sort`, `direction`, `page` (or `cursor`) and `per_page`. The frontend uses these exact names.
+- Search parameters: `name`, `phone`, `email` (all partial matches), `sort`, `direction`, `page` and `per_page`. The frontend uses these exact names.
 
 ## Responses
 
-- `ContactResource` and `ContactCallResource` live in `Http/Resources/`. The identifier is `id` (UUID string). Never serialise `email_domain`.
+- `ContactResource` and `ContactCallResource` live in `Http/Resources/`. The identifier is `id` (UUID string). Never serialise internal-only columns.
 - Return `first_name` and `last_name` separately. The frontend builds display names and initials from them.
 - Timestamps are ISO 8601 in UTC (`toIso8601ZuluString()`), even though the app timezone is Australia/Brisbane.
 - Lists use Resource collections, so `data`, `links` and `meta` (current page, per page, total or next cursor) have the same shape on every list endpoint.

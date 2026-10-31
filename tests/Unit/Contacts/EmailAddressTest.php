@@ -17,11 +17,4 @@ class EmailAddressTest extends TestCase
         $this->assertNull(EmailAddress::normalise('   '));
         $this->assertNull(EmailAddress::normalise(null));
     }
-
-    public function test_domain_is_the_normalised_part_after_the_at_sign(): void
-    {
-        $this->assertSame('mail.example.co.nz', EmailAddress::domainOf('Kiri@Mail.Example.co.NZ'));
-        $this->assertNull(EmailAddress::domainOf('no-at-sign'));
-        $this->assertNull(EmailAddress::domainOf(null));
-    }
 }

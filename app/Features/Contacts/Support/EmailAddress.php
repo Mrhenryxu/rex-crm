@@ -17,20 +17,4 @@ final class EmailAddress
 
         return $normalised === '' ? null : $normalised;
     }
-
-    /**
-     * The normalised part after the last "@", or null when there is none.
-     */
-    public static function domainOf(?string $email): ?string
-    {
-        $normalised = self::normalise($email);
-
-        if ($normalised === null || ! str_contains($normalised, '@')) {
-            return null;
-        }
-
-        $domain = substr($normalised, strrpos($normalised, '@') + 1);
-
-        return $domain === '' ? null : $domain;
-    }
 }

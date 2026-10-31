@@ -17,9 +17,9 @@ final class SearchContactsCommand extends Command
      * @var string
      */
     protected $signature = 'contacts:search
-        {--name= : First or last name prefix; every word must match}
-        {--phone= : E.164 phone prefix, e.g. +61412}
-        {--email-domain= : Exact email domain, e.g. example.com}
+        {--name= : Part of the first or last name; every word must match}
+        {--phone= : Part of the phone number, local or international, e.g. 0412 345}
+        {--email= : Part of the email address, e.g. acme.com.au}
         {--sort= : first_name, last_name (default) or created_at}
         {--direction= : asc (default) or desc}
         {--page= : Page number (default 1)}
@@ -28,14 +28,14 @@ final class SearchContactsCommand extends Command
     /**
      * @var string
      */
-    protected $description = 'Search contacts by name, phone or email domain';
+    protected $description = 'Search contacts by name, phone or email (partial matches)';
 
     public function handle(SearchContacts $searchContacts): int
     {
         $validated = $this->validateInput([
             'name' => $this->optionValue('name'),
             'phone' => $this->optionValue('phone'),
-            'email_domain' => $this->optionValue('email-domain'),
+            'email' => $this->optionValue('email'),
             'sort' => $this->optionValue('sort'),
             'direction' => $this->optionValue('direction'),
             'page' => $this->optionValue('page'),

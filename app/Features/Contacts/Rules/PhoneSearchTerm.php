@@ -10,8 +10,8 @@ final class PhoneSearchTerm implements ValidationRule
 {
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        if (! is_string($value) || PhoneNumber::searchPrefix($value) === null) {
-            $fail('The :attribute filter must be the start of an E.164 number: 2 to 15 digits with an optional leading +, e.g. +6141.');
+        if (! is_string($value) || PhoneNumber::searchDigits($value) === null) {
+            $fail('The :attribute filter must be 2 to 15 digits, optionally with a leading + and spaces, e.g. 0412 345 or +6421.');
         }
     }
 }

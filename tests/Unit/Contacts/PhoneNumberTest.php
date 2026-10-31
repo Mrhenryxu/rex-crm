@@ -61,18 +61,25 @@ class PhoneNumberTest extends TestCase
         $this->assertFalse(PhoneNumber::isValidAuNz($number));
     }
 
-    public function test_search_prefix_is_normalised_to_e164_prefix(): void
+    public function test_search_digits_strip_formatting(): void
     {
-        $this->assertSame('+614123', PhoneNumber::searchPrefix('+61 412-3'));
-        $this->assertSame('+61412', PhoneNumber::searchPrefix('61412'));
-        $this->assertSame('+6421', PhoneNumber::searchPrefix('(+64) 21'));
+        $this->assertSame('614123', PhoneNumber::searchDigits('+61 412-3'));
+        $this->assertSame('61412', PhoneNumber::searchDigits('61412'));
+        $this->assertSame('345678', PhoneNumber::searchDigits('345 678'));
     }
 
-    public function test_search_prefix_rejects_non_numeric_or_out_of_range_terms(): void
+    public function test_search_digits_drop_a_local_trunk_zero(): void
     {
-        $this->assertNull(PhoneNumber::searchPrefix('abc'));
-        $this->assertNull(PhoneNumber::searchPrefix('+6'));
-        $this->assertNull(PhoneNumber::searchPrefix('6+1'));
-        $this->assertNull(PhoneNumber::searchPrefix('+1234567890123456'));
+        $this->assertSame('412345', PhoneNumber::searchDigits('0412 345'));
+        $this->assertSame('91234', PhoneNumber::searchDigits('(09) 1234'));
+        $this->assertSame('0412', PhoneNumber::searchDigits('+0412'));
+    }
+
+    public function test_search_digits_reject_non_numeric_or_out_of_range_terms(): void
+    {
+        $this->assertNull(PhoneNumber::searchDigits('abc'));
+        $this->assertNull(PhoneNumber::searchDigits('6'));
+        $this->assertNull(PhoneNumber::searchDigits('6+1'));
+        $this->assertNull(PhoneNumber::searchDigits('+1234567890123456'));
     }
 }

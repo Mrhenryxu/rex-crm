@@ -5,7 +5,7 @@ export const PER_PAGE_OPTIONS = [10, 15, 25, 50, 100] as const;
 export const DEFAULT_LIST_PARAMS: ContactListParams = {
     name: '',
     phone: '',
-    email_domain: '',
+    email: '',
     sort: 'last_name',
     direction: 'asc',
     page: 1,
@@ -26,7 +26,7 @@ export function parseListParams(search: URLSearchParams): ContactListParams {
     return {
         name: search.get('name') ?? '',
         phone: search.get('phone') ?? '',
-        email_domain: search.get('email_domain') ?? '',
+        email: search.get('email') ?? '',
         sort: SORT_FIELDS.includes(sort as SortField) ? (sort as SortField) : DEFAULT_LIST_PARAMS.sort,
         direction: search.get('direction') === 'desc' ? 'desc' : 'asc',
         page: positiveInt(search.get('page'), 1),
@@ -50,5 +50,5 @@ export function toSearchParams(params: ContactListParams): URLSearchParams {
 }
 
 export function filtersOf(params: ContactListParams): ContactFilters {
-    return { name: params.name, phone: params.phone, email_domain: params.email_domain };
+    return { name: params.name, phone: params.phone, email: params.email };
 }

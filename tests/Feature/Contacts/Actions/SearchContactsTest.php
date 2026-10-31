@@ -47,13 +47,14 @@ class SearchContactsTest extends TestCase
         Contact::factory()->create(['first_name' => 'Mere', 'last_name' => 'Ngata', 'email' => null, 'phone' => '+6491234567']);
     }
 
-    public function test_name_filter_is_a_case_insensitive_prefix_on_first_or_last_name(): void
+    public function test_name_filter_matches_any_part_of_first_or_last_name_case_insensitively(): void
     {
         $this->seedPeople();
 
         $this->assertSame(['Joanna Brown', 'Aroha Johnson', 'John Smith'], $this->names($this->search(['name' => 'JO'])));
-        $this->assertSame(['John Smith'], $this->names($this->search(['name' => 'jo smi'])));
-        $this->assertSame([], $this->names($this->search(['name' => 'ohn'])));
+        $this->assertSame(['Aroha Johnson', 'John Smith'], $this->names($this->search(['name' => 'ohn'])));
+        $this->assertSame(['John Smith'], $this->names($this->search(['name' => 'ohn mit'])));
+        $this->assertSame([], $this->names($this->search(['name' => 'xyz'])));
     }
 
     public function test_name_filter_treats_like_wildcards_literally(): void
@@ -62,29 +63,41 @@ class SearchContactsTest extends TestCase
 
         $this->assertSame([], $this->names($this->search(['name' => '%'])));
         $this->assertSame([], $this->names($this->search(['name' => '_o'])));
+        $this->assertSame([], $this->names($this->search(['email' => '%@%'])));
     }
 
-    public function test_phone_filter_matches_an_e164_prefix(): void
+    public function test_phone_filter_matches_any_part_of_the_number(): void
     {
         $this->seedPeople();
 
         $this->assertSame(['Joanna Brown', 'John Smith'], $this->names($this->search(['phone' => '+61 412'])));
-        $this->assertSame(['Aroha Johnson', 'Mere Ngata'], $this->names($this->search(['phone' => '64'])));
+        $this->assertSame(['Joanna Brown'], $this->names($this->search(['phone' => '000002'])));
+        $this->assertSame(['Mere Ngata'], $this->names($this->search(['phone' => '123 4567'])));
     }
 
-    public function test_email_domain_filter_is_an_exact_case_insensitive_match(): void
+    public function test_phone_filter_accepts_local_numbers_with_the_trunk_zero(): void
     {
         $this->seedPeople();
 
-        $this->assertSame(['Aroha Johnson', 'John Smith'], $this->names($this->search(['email_domain' => '@ACME.com.au'])));
-        $this->assertSame([], $this->names($this->search(['email_domain' => 'acme.com'])));
+        // "0412" is how the number is dialled locally; E.164 stores it as +61412…
+        $this->assertSame(['Joanna Brown', 'John Smith'], $this->names($this->search(['phone' => '0412 000'])));
+        $this->assertSame(['Mere Ngata'], $this->names($this->search(['phone' => '(09) 123'])));
+    }
+
+    public function test_email_filter_matches_any_part_of_the_address_including_the_domain(): void
+    {
+        $this->seedPeople();
+
+        $this->assertSame(['Aroha Johnson', 'John Smith'], $this->names($this->search(['email' => '@ACME.com.au'])));
+        $this->assertSame(['Aroha Johnson', 'John Smith'], $this->names($this->search(['email' => 'acme.com'])));
+        $this->assertSame(['Joanna Brown'], $this->names($this->search(['email' => 'jo@'])));
     }
 
     public function test_filters_combine_with_and(): void
     {
         $this->seedPeople();
 
-        $this->assertSame(['John Smith'], $this->names($this->search(['name' => 'jo', 'email_domain' => 'acme.com.au', 'phone' => '+61'])));
+        $this->assertSame(['John Smith'], $this->names($this->search(['name' => 'jo', 'email' => 'acme.com.au', 'phone' => '+61'])));
     }
 
     public function test_default_sort_is_last_name_then_first_name_ascending(): void
@@ -152,7 +165,7 @@ class SearchContactsTest extends TestCase
             'per page over maximum' => [['per_page' => 101], 'per_page'],
             'per page zero' => [['per_page' => 0], 'per_page'],
             'malformed phone' => [['phone' => 'abc'], 'phone'],
-            'malformed domain' => [['email_domain' => 'not a domain'], 'email_domain'],
+            'email too long' => [['email' => str_repeat('a', 255)], 'email'],
         ];
     }
 

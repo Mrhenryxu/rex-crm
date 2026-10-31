@@ -20,17 +20,18 @@ final class PhoneNumber
     }
 
     /**
-     * Normalise a phone search term to an E.164 prefix, e.g. "+61 412-3" becomes "+614123".
-     * Returns null when the term cannot be a prefix of an E.164 number.
+     * Digits to look for anywhere in a stored E.164 number, e.g. "+61 412-3" becomes "614123".
+     * A local number's leading trunk 0 is dropped, because E.164 omits it: "0412 345" becomes "412345",
+     * which matches "+61412345678". Returns null when the term is not 2 to 15 digits.
      */
-    public static function searchPrefix(string $term): ?string
+    public static function searchDigits(string $term): ?string
     {
         $compact = preg_replace('/[\s\-().]/', '', $term) ?? '';
 
-        if (preg_match('/^\+?(\d{2,15})$/', $compact, $matches) !== 1) {
+        if (preg_match('/^(\+?)(\d{2,15})$/', $compact, $matches) !== 1) {
             return null;
         }
 
-        return '+'.$matches[1];
+        return $matches[1] === '' && str_starts_with($matches[2], '0') ? substr($matches[2], 1) : $matches[2];
     }
 }

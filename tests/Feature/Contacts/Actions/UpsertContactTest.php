@@ -34,7 +34,6 @@ class UpsertContactTest extends TestCase
             'id' => $result->contact->id,
             'first_name' => 'Jane',
             'email' => 'jane@example.com',
-            'email_domain' => 'example.com',
             'phone' => '+61412345678',
         ]);
     }
@@ -68,7 +67,6 @@ class UpsertContactTest extends TestCase
             'id' => $contact->id,
             'first_name' => 'New',
             'email' => null,
-            'email_domain' => null,
             'phone' => '+64211234567',
         ]);
     }

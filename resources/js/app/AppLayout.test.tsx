@@ -18,12 +18,12 @@ describe('CRM shell', () => {
         expect(screen.getByRole('main')).toBeInTheDocument();
     });
 
-    test('marks the current navigation item', () => {
+    test('has a single Contacts item marked as the current page', () => {
         renderApp('/contacts');
         const nav = screen.getByRole('navigation', { name: 'Main navigation' });
 
+        expect(within(nav).getAllByRole('link')).toHaveLength(1);
         expect(within(nav).getByRole('link', { name: 'Contacts' })).toHaveAttribute('aria-current', 'page');
-        expect(within(nav).getByRole('link', { name: 'New contact' })).not.toHaveAttribute('aria-current');
     });
 
     test('collapses to icon-only items that keep their accessible names', async () => {

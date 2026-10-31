@@ -19,6 +19,16 @@ function Harness({ initial = '', onValue }: { initial?: string; onValue: (value:
 }
 
 describe('PhoneField', () => {
+    test('is one field: the country picker sits inside the phone input', () => {
+        renderWithProviders(<Harness onValue={() => {}} />);
+
+        const input = screen.getByRole('textbox', { name: 'Phone' });
+        const picker = screen.getByRole('combobox', { name: 'Country' });
+        expect(input.parentElement).toContainElement(picker);
+        expect(screen.getByRole('option', { name: 'Australia (+61)' })).toBeInTheDocument();
+        expect(screen.getByRole('img', { name: 'Australia' })).toBeInTheDocument();
+    });
+
     test('converts local AU and NZ input to E.164', () => {
         expect(toE164('0412 345 678', 'AU')).toBe('+61412345678');
         expect(toE164('021 123 4567', 'NZ')).toBe('+64211234567');
@@ -50,8 +60,7 @@ describe('PhoneField', () => {
         renderWithProviders(<Harness onValue={(value) => values.push(value)} />);
 
         await user.type(screen.getByRole('textbox', { name: 'Phone' }), '0211234567');
-        await user.click(screen.getByRole('combobox', { name: 'Country' }));
-        await user.click(await screen.findByRole('option', { name: 'New Zealand (+64)' }));
+        await user.selectOptions(screen.getByRole('combobox', { name: 'Country' }), 'NZ');
 
         expect(values.at(-1)).toBe('+64211234567');
     });
@@ -62,13 +71,14 @@ describe('PhoneField', () => {
 
         await user.type(screen.getByRole('textbox', { name: 'Phone' }), '+64 21 123 4567');
 
-        expect(screen.getByRole('combobox', { name: 'Country' })).toHaveValue('New Zealand (+64)');
+        expect(screen.getByRole('combobox', { name: 'Country' })).toHaveValue('NZ');
+        expect(screen.getByRole('img', { name: 'New Zealand' })).toBeInTheDocument();
     });
 
     test('shows an existing number in national format with its country', () => {
         renderWithProviders(<Harness initial="+6493012345" onValue={() => {}} />);
 
         expect(screen.getByRole('textbox', { name: 'Phone' })).toHaveValue("09 301 2345");
-        expect(screen.getByRole('combobox', { name: 'Country' })).toHaveValue('New Zealand (+64)');
+        expect(screen.getByRole('combobox', { name: 'Country' })).toHaveValue('NZ');
     });
 });

@@ -1,6 +1,7 @@
 import { Badge, Table, Text } from '@mantine/core';
 import type { ContactCall } from '../types/contact';
-import { formatDateTime, formatPhone, OUTCOME_COLORS, OUTCOME_LABELS, STATUS_LABELS } from '../utils/format';
+import { formatDateTime, OUTCOME_COLORS, OUTCOME_LABELS, STATUS_LABELS } from '../utils/format';
+import { PhoneNumberText } from './PhoneNumberText';
 
 export function CallHistory({ calls }: { calls: ContactCall[] }) {
     if (calls.length === 0) {
@@ -21,7 +22,9 @@ export function CallHistory({ calls }: { calls: ContactCall[] }) {
                     {calls.map((call) => (
                         <Table.Tr key={call.id}>
                             <Table.Td>{formatDateTime(call.created_at)}</Table.Td>
-                            <Table.Td>{formatPhone(call.phone)}</Table.Td>
+                            <Table.Td>
+                                <PhoneNumberText phone={call.phone} />
+                            </Table.Td>
                             <Table.Td>
                                 {call.outcome ? (
                                     <Badge color={OUTCOME_COLORS[call.outcome]} variant="light">

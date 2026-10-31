@@ -16,7 +16,7 @@ interface ContactAvatarProps extends Omit<AvatarProps, 'children' | 'name'> {
 /** Decorative: the full name is always shown next to it, so it is hidden from assistive technology. */
 export function ContactAvatar({ firstName, lastName, ...props }: ContactAvatarProps) {
     return (
-        <Avatar name={`${firstName} ${lastName}`} color="initials" radius="xl" aria-hidden data-testid="contact-avatar" {...props}>
+        <Avatar name={`${firstName} ${lastName}`} color="initials" radius={9999} aria-hidden data-testid="contact-avatar" {...props}>
             {initials(firstName, lastName)}
         </Avatar>
     );

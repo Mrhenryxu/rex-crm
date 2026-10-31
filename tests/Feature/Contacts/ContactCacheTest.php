@@ -141,8 +141,8 @@ class ContactCacheTest extends TestCase
             new ContactSearchCriteria(page: 2),
             new ContactSearchCriteria(perPage: 50),
             new ContactSearchCriteria(name: 'jo'),
-            new ContactSearchCriteria(phonePrefix: '+61'),
-            new ContactSearchCriteria(emailDomain: 'example.com'),
+            new ContactSearchCriteria(phoneDigits: '61'),
+            new ContactSearchCriteria(email: 'example.com'),
         ])->map(fn (ContactSearchCriteria $criteria): string => $cache->listKey($criteria));
 
         $this->assertCount($keys->count(), $keys->unique());

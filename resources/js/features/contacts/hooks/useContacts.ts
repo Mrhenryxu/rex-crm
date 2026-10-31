@@ -6,7 +6,7 @@ export function useContactList(params: ContactListParams) {
     return useApiQuery((signal) => listContacts(params, signal), [
         params.name,
         params.phone,
-        params.email_domain,
+        params.email,
         params.sort,
         params.direction,
         params.page,

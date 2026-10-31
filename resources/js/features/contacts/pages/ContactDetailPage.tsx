@@ -1,5 +1,5 @@
-import { Alert, Anchor, Badge, Button, Card, Group, SimpleGrid, Skeleton, Stack, Text, Title, Tooltip } from '@mantine/core';
-import { IconArrowLeft, IconPencil, IconPhoneCall, IconTrash } from '@tabler/icons-react';
+import { Alert, Anchor, Button, Card, Group, Skeleton, Stack, Text, Title, Tooltip } from '@mantine/core';
+import { IconArrowLeft, IconMail, IconPencil, IconPhoneCall, IconTrash } from '@tabler/icons-react';
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { NotFoundPage } from '@/app/NotFoundPage';
@@ -8,22 +8,12 @@ import { ConfirmationDialog } from '@/components/ui/ConfirmationDialog';
 import { ApiError, toApiError } from '@/lib/api-client';
 import { deleteContact, placeCall } from '../api/contacts';
 import { CallHistory } from '../components/CallHistory';
+import { CallResultAlert } from '../components/CallResultAlert';
 import { ContactAvatar } from '../components/ContactAvatar';
+import { PhoneNumberText } from '../components/PhoneNumberText';
 import { useContact } from '../hooks/useContacts';
 import { useNotice, type NoticeState } from '../hooks/useNotice';
 import type { ContactCall } from '../types/contact';
-import { formatDateTime, formatPhone, OUTCOME_COLORS, OUTCOME_LABELS, STATUS_LABELS } from '../utils/format';
-
-function Detail({ label, children }: { label: string; children: React.ReactNode }) {
-    return (
-        <div>
-            <Text size="sm" c="dimmed">
-                {label}
-            </Text>
-            <Text>{children}</Text>
-        </div>
-    );
-}
 
 export function ContactDetailPage() {
     const { id = '' } = useParams();
@@ -84,49 +74,51 @@ export function ContactDetailPage() {
             )}
             {error && <ApiErrorAlert error={error} title="Could not load the contact" />}
             {actionError && <ApiErrorAlert error={actionError} title="The action failed" />}
+            {lastCall && <CallResultAlert call={lastCall} />}
 
-            {loading && !contact && <Skeleton height={200} aria-label="Loading contact" />}
+            {loading && !contact && <Skeleton height={280} aria-label="Loading contact" />}
 
             {contact && (
                 <>
-                    <Group justify="space-between" align="center" wrap="wrap">
-                        <Group gap="md" wrap="nowrap">
-                            <ContactAvatar firstName={contact.first_name} lastName={contact.last_name} size="lg" />
-                            <Title order={1}>
+                    <Card withBorder padding="xl">
+                        <Stack align="center" gap="md">
+                            <ContactAvatar firstName={contact.first_name} lastName={contact.last_name} size={96} />
+                            <Title order={1} ta="center">
                                 {contact.first_name} {contact.last_name}
                             </Title>
-                        </Group>
-                        <Group gap="sm">
-                            <Tooltip label="Add a phone number to call this contact" disabled={contact.phone !== null}>
-                                <Button leftSection={<IconPhoneCall size={18} aria-hidden />} onClick={call} loading={calling} disabled={contact.phone === null}>
-                                    Call
+
+                            <Stack align="center" gap={6}>
+                                {contact.email && (
+                                    <Group gap={8} wrap="nowrap">
+                                        <IconMail size={18} aria-hidden />
+                                        <Anchor href={`mailto:${contact.email}`}>{contact.email}</Anchor>
+                                    </Group>
+                                )}
+                                {contact.phone && <PhoneNumberText phone={contact.phone} />}
+                                {!contact.email && !contact.phone && <Text c="dimmed">No contact details</Text>}
+                            </Stack>
+
+                            <Group gap="sm" justify="center" mt="xs">
+                                <Tooltip label="Add a phone number to call this contact" disabled={contact.phone !== null}>
+                                    <Button leftSection={<IconPhoneCall size={18} aria-hidden />} onClick={call} loading={calling} disabled={contact.phone === null}>
+                                        Call
+                                    </Button>
+                                </Tooltip>
+                                <Button
+                                    component={Link}
+                                    to={`/contacts/${contact.id}/edit`}
+                                    variant="default"
+                                    leftSection={<IconPencil size={18} aria-hidden />}
+                                    // No hover effect: keep the resting background on hover.
+                                    vars={() => ({ root: { '--button-hover': 'var(--mantine-color-default)' } })}
+                                >
+                                    Edit
                                 </Button>
-                            </Tooltip>
-                            <Button component={Link} to={`/contacts/${contact.id}/edit`} variant="default" leftSection={<IconPencil size={18} aria-hidden />}>
-                                Edit
-                            </Button>
-                            <Button color="red" variant="light" leftSection={<IconTrash size={18} aria-hidden />} onClick={() => setConfirmingDelete(true)}>
-                                Delete
-                            </Button>
-                        </Group>
-                    </Group>
-
-                    {lastCall && (
-                        <Alert color={lastCall.outcome ? OUTCOME_COLORS[lastCall.outcome] : 'gray'} variant="light" title="Call finished" role="status">
-                            Called {formatPhone(lastCall.phone)}. Outcome:{' '}
-                            <Badge color={lastCall.outcome ? OUTCOME_COLORS[lastCall.outcome] : 'gray'} variant="filled">
-                                {lastCall.outcome ? OUTCOME_LABELS[lastCall.outcome] : STATUS_LABELS[lastCall.status]}
-                            </Badge>
-                        </Alert>
-                    )}
-
-                    <Card withBorder padding="lg">
-                        <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
-                            <Detail label="Email">{contact.email ?? '—'}</Detail>
-                            <Detail label="Phone">{contact.phone ? formatPhone(contact.phone) : '—'}</Detail>
-                            <Detail label="Added">{formatDateTime(contact.created_at)}</Detail>
-                            <Detail label="Last updated">{formatDateTime(contact.updated_at)}</Detail>
-                        </SimpleGrid>
+                                <Button color="red" variant="light" leftSection={<IconTrash size={18} aria-hidden />} onClick={() => setConfirmingDelete(true)}>
+                                    Delete
+                                </Button>
+                            </Group>
+                        </Stack>
                     </Card>
 
                     <Card withBorder padding="lg">

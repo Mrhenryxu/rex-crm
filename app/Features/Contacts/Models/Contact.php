@@ -16,7 +16,6 @@ use Illuminate\Support\Carbon;
  * @property string $first_name
  * @property string $last_name
  * @property string|null $email
- * @property string|null $email_domain
  * @property string|null $phone
  * @property Carbon $created_at
  * @property Carbon $updated_at
@@ -36,13 +35,6 @@ class Contact extends Model
         'last_name',
         'email',
         'phone',
-    ];
-
-    /**
-     * @var list<string>
-     */
-    protected $hidden = [
-        'email_domain',
     ];
 
     protected static function newFactory(): ContactFactory
@@ -72,15 +64,10 @@ class Contact extends Model
     }
 
     /**
-     * Always store the normalised email and keep the derived domain in step with it.
+     * Always store the normalised (trimmed, lower-cased) email.
      */
     protected function email(): Attribute
     {
-        return Attribute::make(
-            set: fn (?string $value): array => [
-                'email' => EmailAddress::normalise($value),
-                'email_domain' => EmailAddress::domainOf($value),
-            ],
-        );
+        return Attribute::make(set: fn (?string $value): ?string => EmailAddress::normalise($value));
     }
 }

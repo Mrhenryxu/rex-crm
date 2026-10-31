@@ -34,8 +34,8 @@ A React SPA that uses most of the Contacts API. The brief asks for pragmatic, st
 
 ## Contacts listing
 
-- A table with columns for name, email, phone and actions. The name cell shows an avatar circle with initials taken from `first_name` and `last_name`. There is no image upload.
-- The search and filter form has fields for name, phone and email domain, with explicit Search and Clear buttons. Pressing Search sends the request. Clear resets the fields and reloads the default list. Typing does not trigger requests.
+- A table with columns for name, email, phone (with country flag) and actions (mock call, mailto). Clicking a row opens the contact. The name cell shows an avatar circle with initials taken from `first_name` and `last_name`. There is no image upload.
+- The search and filter form has Name, Phone and Email fields (partial matches) with explicit Search and Clear buttons, all on one row on large screens. Sort by sits on the right above the table. Pressing Search sends the request. Clear resets the fields and reloads the default list. Typing does not trigger requests.
 - Sorting and pagination controls send `sort`, `direction`, `page` and `per_page` to the API. Never filter, sort or paginate on the client. Render the API's `data` and `meta`.
 - Keep query state in the URL search parameters so links and the back button work.
 - Show loading, empty and error states with Mantine components.
@@ -64,7 +64,7 @@ A React SPA that uses most of the Contacts API. The brief asks for pragmatic, st
 
 1. Phone input uses `libphonenumber-js`, with an AU/NZ country `Select` and as-you-type formatting.
 2. Routing uses `react-router`. Server state uses small hooks with `fetch`, not a server-state library.
-3. Create and edit are pages. Icons come from `@tabler/icons-react`.
+3. Create is a modal on the listing; edit is a page. The navigation has a single Contacts item. Icons come from `@tabler/icons-react`.
 4. Component tests use Vitest and Testing Library. End-to-end tests use Playwright.
 
 ## Testing expectations

@@ -49,7 +49,8 @@ final class ContactRules
         return [
             'name' => ['nullable', 'string', 'max:'.self::NAME_MAX_LENGTH],
             'phone' => ['nullable', 'string', 'max:25', new PhoneSearchTerm],
-            'email_domain' => ['nullable', 'string', 'max:253', 'regex:/^@?(?!-)[a-z0-9-]+(\.[a-z0-9-]+)+$/i'],
+            // Partial match: any part of the address, including a domain such as "acme.com.au".
+            'email' => ['nullable', 'string', 'max:'.self::EMAIL_MAX_LENGTH],
             'sort' => ['nullable', Rule::enum(ContactSortField::class)],
             'direction' => ['nullable', Rule::enum(SortDirection::class)],
             'page' => ['nullable', 'integer', 'min:1'],
@@ -63,7 +64,6 @@ final class ContactRules
     public static function searchMessages(): array
     {
         return [
-            'email_domain.regex' => 'The email domain filter must be a domain name, e.g. example.com.',
             'sort.enum' => 'The sort field must be one of: '.implode(', ', array_column(ContactSortField::cases(), 'value')).'.',
             'direction.enum' => 'The direction must be asc or desc.',
         ];

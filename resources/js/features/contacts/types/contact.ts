@@ -49,7 +49,7 @@ export type SortDirection = 'asc' | 'desc';
 export interface ContactFilters {
     name: string;
     phone: string;
-    email_domain: string;
+    email: string;
 }
 
 /** Query parameters for GET /contacts. Filtering, sorting and paging all happen on the server. */

@@ -23,25 +23,18 @@ class ContactSchemaTest extends TestCase
         $this->assertSame('id', $contact->getRouteKeyName());
     }
 
-    public function test_email_is_normalised_and_domain_is_derived_on_save(): void
+    public function test_email_is_normalised_on_save(): void
     {
         $contact = Contact::factory()->create(['email' => '  Jane@Example.COM ']);
 
-        $this->assertDatabaseHas('contacts', [
-            'id' => $contact->id,
-            'email' => 'jane@example.com',
-            'email_domain' => 'example.com',
-        ]);
-        $this->assertArrayNotHasKey('email_domain', $contact->toArray());
+        $this->assertDatabaseHas('contacts', ['id' => $contact->id, 'email' => 'jane@example.com']);
     }
 
-    public function test_clearing_the_email_clears_the_domain(): void
+    public function test_blank_email_is_stored_as_null(): void
     {
-        $contact = Contact::factory()->create();
+        $contact = Contact::factory()->create(['email' => '   ']);
 
-        $contact->update(['email' => null]);
-
-        $this->assertNull($contact->fresh()->email_domain);
+        $this->assertNull($contact->fresh()->email);
     }
 
     public function test_database_rejects_a_contact_without_email_or_phone(): void

@@ -47,7 +47,7 @@ From the approved plan:
 ## Email rule
 
 - Trim, then `email:rfc` and `max:254`. Do not use `dns`, because it makes network calls and makes tests non-deterministic.
-- Normalise by trimming and lower-casing the whole address before saving it to the database and before comparing it (decided). Store `email_domain` as described in `contacts-domain`.
+- Normalise by trimming and lower-casing the whole address before saving it to the database and before comparing it (decided).
 
 ## Name rules
 
@@ -69,7 +69,7 @@ From the approved plan:
 1. The backend accepts strict E.164 only. The frontend phone input converts local input such as `0412 345 678` to E.164 before sending.
 2. AU special-service ranges (13/1300/1800, satellite) are out of scope.
 3. Names: maximum 100 characters each.
-4. Phone search terms are digits with an optional leading `+`, 2 to 15 digits, matched as an E.164 prefix. Email-domain search terms must be a valid domain and match exactly.
+4. Search filters are partial (contains) matches. Phone terms are 2 to 15 digits with an optional leading `+`; a local trunk `0` is dropped, so `0412 345` matches `+61412345…`. The `email` filter matches any part of the address, which covers searching by domain.
 
 ## Testing expectations
 

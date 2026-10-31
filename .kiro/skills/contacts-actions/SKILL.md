@@ -47,7 +47,7 @@ Do not add Actions the requirements don't need (bulk import, merge, restore).
 
 The backend owns filtering, searching, sorting and pagination. The frontend only sends parameters and renders the results.
 
-- Filters: name, phone, email domain (from the brief).
+- Filters: name, phone and email, all partial (contains) matches. Email covers the brief's email-domain search.
 - Use query builder bindings only. Never interpolate client input into SQL, including column names. Escape `%` and `_` in `ILIKE` patterns.
 - Sort: map the validated `sort` value through an allow-list to a real column, and `direction` to `asc` or `desc`. Always add `id` as the final tie-breaker.
 - Pagination: use one style everywhere (`paginate()` or `cursorPaginate()`). Read the default and maximum page sizes from config.

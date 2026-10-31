@@ -4,17 +4,19 @@ namespace App\Features\Contacts\Data;
 
 use App\Features\Contacts\Enums\ContactSortField;
 use App\Features\Contacts\Enums\SortDirection;
+use App\Features\Contacts\Support\EmailAddress;
 use App\Features\Contacts\Support\PhoneNumber;
 
 /**
  * Validated search, sort and pagination input with defaults applied.
+ * Every filter is a partial (contains) match.
  */
 final readonly class ContactSearchCriteria
 {
     public function __construct(
         public ?string $name = null,
-        public ?string $phonePrefix = null,
-        public ?string $emailDomain = null,
+        public ?string $phoneDigits = null,
+        public ?string $email = null,
         public ContactSortField $sort = ContactSortField::LastName,
         public SortDirection $direction = SortDirection::Asc,
         public int $page = 1,
@@ -28,12 +30,11 @@ final readonly class ContactSearchCriteria
     {
         $name = trim((string) ($validated['name'] ?? ''));
         $phone = trim((string) ($validated['phone'] ?? ''));
-        $domain = mb_strtolower(ltrim(trim((string) ($validated['email_domain'] ?? '')), '@'));
 
         return new self(
             name: $name === '' ? null : $name,
-            phonePrefix: $phone === '' ? null : PhoneNumber::searchPrefix($phone),
-            emailDomain: $domain === '' ? null : $domain,
+            phoneDigits: $phone === '' ? null : PhoneNumber::searchDigits($phone),
+            email: EmailAddress::normalise(isset($validated['email']) ? (string) $validated['email'] : null),
             sort: isset($validated['sort']) ? ContactSortField::from((string) $validated['sort']) : ContactSortField::LastName,
             direction: isset($validated['direction']) ? SortDirection::from((string) $validated['direction']) : SortDirection::Asc,
             page: (int) ($validated['page'] ?? 1),
@@ -43,6 +44,6 @@ final readonly class ContactSearchCriteria
 
     public function hasFilters(): bool
     {
-        return $this->name !== null || $this->phonePrefix !== null || $this->emailDomain !== null;
+        return $this->name !== null || $this->phoneDigits !== null || $this->email !== null;
     }
 }

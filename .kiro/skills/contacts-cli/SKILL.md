@@ -17,7 +17,7 @@ Commands live in `App\Features\Contacts\Console\Commands`. Each is a `final` cla
 | --------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
 | `contacts:upsert {--id=} {--first-name=} {--last-name=} {--email=} {--phone=}`                            | UpsertContact                             |
 | `contacts:show {id}`                                                                                      | read                                      |
-| `contacts:search {--name=} {--phone=} {--email-domain=} {--sort=} {--direction=} {--page=} {--per-page=}` | SearchContacts                            |
+| `contacts:search {--name=} {--phone=} {--email=} {--sort=} {--direction=} {--page=} {--per-page=}` | SearchContacts                            |
 | `contacts:delete {id} {--force}`                                                                          | DeleteContact                             |
 | `contacts:call {id} {--sync}`                                                                             | call Actions (see `contacts-calls-queue`) |
 
