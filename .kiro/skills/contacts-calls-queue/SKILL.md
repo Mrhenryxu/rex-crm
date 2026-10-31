@@ -40,11 +40,12 @@ HTTP, CLI and job all use these two Actions. Nothing else changes call state.
 - Calls use the strictest rate limiter (`contacts-calls`). It returns 429 with `Retry-After` when exceeded.
 - Responses, the CLI and the job identify calls and contacts by their UUID `id`. The job payload carries the model, which serialises to that UUID.
 
-## Open decisions
+## Decisions
 
-1. Approved outcome list and whether some outcomes count as retryable.
-2. Default execution mode for HTTP (async with 202 is the recommendation).
-3. Whether the call history is kept after a contact is deleted.
+1. Outcomes: `answered`, `busy`, `no_answer`, `voicemail`, `failed`. Outcomes are results, not errors, so none of them is retried. Only unexpected exceptions are retried, up to 3 attempts.
+2. HTTP accepts `mode` = `async` (default, 202) or `sync` (201). The SPA uses `sync`.
+3. Call history is deleted with the contact (cascade).
+4. The job receives the call UUID, not the model. A missing call is a successful no-op and is not retried.
 
 ## Testing expectations
 

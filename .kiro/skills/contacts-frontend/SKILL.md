@@ -57,11 +57,12 @@ A React SPA that uses most of the Contacts API. The brief asks for pragmatic, st
 - Every icon-only button needs an accessible name.
 - Check contrast in both light and dark schemes.
 
-## Open decisions
+## Decisions
 
-1. Which phone-number library to use (for example `react-phone-number-input` or `libphonenumber-js`), and whether it is restricted to AU/NZ.
-2. Client-side routing (React Router or similar) and server-state handling (for example TanStack Query or plain hooks). Both are new dependencies.
-3. Whether contact create and edit use a page or a modal.
+1. Phone input uses `libphonenumber-js`, with an AU/NZ country `Select` and as-you-type formatting.
+2. Routing uses `react-router`. Server state uses small hooks with `fetch`, not a server-state library.
+3. Create and edit are pages. Icons come from `@tabler/icons-react`.
+4. Component tests use Vitest and Testing Library. End-to-end tests use Playwright.
 
 ## Testing expectations
 

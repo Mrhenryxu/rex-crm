@@ -64,11 +64,12 @@ From the approved plan:
 - Normalise a phone search term with the same phone class. Reject a malformed phone term or email domain with 422 rather than returning an empty list.
 - `sort` and `direction` use `Rule::in()` with the allow-lists. `per_page` uses `integer|min:1|max:<max>`.
 
-## Open decisions
+## Decisions
 
-1. Strict E.164 input only (the brief's wording), or also accept local formats such as `0412 345 678` and convert them. Accepting local formats loosens the brief and needs explicit approval. Until then the default is strict, and the frontend library sends E.164.
-2. Whether AU special-service ranges (13/1300/1800, satellite) are in scope. The default is no.
-3. Maximum lengths for the name fields.
+1. The backend accepts strict E.164 only. The frontend phone input converts local input such as `0412 345 678` to E.164 before sending.
+2. AU special-service ranges (13/1300/1800, satellite) are out of scope.
+3. Names: maximum 100 characters each.
+4. Phone search terms are digits with an optional leading `+`, 2 to 15 digits, matched as an E.164 prefix. Email-domain search terms must be a valid domain and match exactly.
 
 ## Testing expectations
 

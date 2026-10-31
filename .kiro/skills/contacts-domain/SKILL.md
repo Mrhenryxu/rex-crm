@@ -68,13 +68,13 @@ Add an index only for a query the API or UI actually runs, and confirm it agains
 - `contacts:search:version` is a counter that write Actions increment to invalidate all cached searches at once. The default `database` store has no tags, so do not use tags.
 - Always set an explicit TTL.
 
-## Open decisions
+## Decisions
 
-1. The brief says "names, phones and emails". The approved model has one email and one phone per contact. Confirm that this reading is intended.
-2. The upsert identity key (`id` vs email or phone). It decides whether `email` and `phone` need unique constraints.
-3. Name match mode (prefix or contains), which decides the name index.
-4. Delete strategy (hard or soft) and whether call history is kept (`cascadeOnDelete` or `restrictOnDelete`).
-5. The approved list of call outcomes.
+1. One email and one phone per contact.
+2. Business upsert key: the normalised email. `email` has a unique constraint (PostgreSQL allows many NULLs). `phone` is not unique. The UUID `id` identifies a contact for explicit updates, but it is not the upsert key.
+3. Name search: case-insensitive prefix match on first or last name. No `pg_trgm`.
+4. Hard delete. `contact_calls.contact_id` uses `cascadeOnDelete`, so deleting a contact removes its calls.
+5. Call outcomes: `answered`, `busy`, `no_answer`, `voicemail`, `failed`. Call status: `pending`, `completed`, `failed`. A `failed` status means processing failed, not the call outcome.
 
 ## Testing expectations
 

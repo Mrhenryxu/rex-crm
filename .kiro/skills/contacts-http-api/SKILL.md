@@ -54,12 +54,12 @@ Exposes the Contacts Actions over HTTP to the SPA and to third-party consumers. 
 - Read the limits from config, not inline literals.
 - Rate limiting and UUIDs are not authorisation. Authentication and authorisation remain out of scope.
 
-## Open decisions
+## Decisions
 
-1. Upsert endpoint shape (`PUT /contacts/{id}` or `POST /contacts` with a natural key).
-2. Rate limit values, plus the default and maximum page sizes.
-3. Offset or cursor pagination, and the sortable fields (for example `first_name`, `last_name`, `created_at`).
-4. Whether the HTTP call endpoint defaults to async or sync.
+1. `POST /contacts` upserts by normalised email (201 created, 200 updated). `PUT /contacts/{contact}` replaces the given contact and returns 409 if the email belongs to another contact.
+2. Per IP, per minute: read 120, write 30, calls 10. Page size: default 15, maximum 100. All values come from `config/contacts.php`.
+3. Offset pagination (`page`, `per_page`). Sortable fields: `first_name`, `last_name`, `created_at`. Default sort: `last_name` ascending.
+4. The call endpoint defaults to async. There is no separate call-history endpoint, because `GET /contacts/{contact}` returns the latest 10 calls.
 
 ## Testing expectations
 

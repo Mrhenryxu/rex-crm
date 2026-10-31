@@ -38,7 +38,8 @@ Do not add Actions the requirements don't need (bulk import, merge, restore).
 
 ## Upsert
 
-- Implement exactly one identity strategy once it is decided (see `contacts-domain`). Do not guess.
+- Identity (decided): with no target contact, an email that matches an existing contact updates that contact. Otherwise a new contact is created, so phone-only input always creates. With an explicit target contact (update by UUID), that contact is updated, and an email owned by another contact is a conflict.
+- Detail reads return the contact with its latest 10 calls, eager loaded.
 - Catch `UniqueConstraintViolationException` from concurrent creates and turn it into an informative domain exception.
 - Save normalised values: E.164 phone, and email trimmed and lower-cased.
 
