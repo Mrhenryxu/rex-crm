@@ -22,6 +22,23 @@ return [
     |
     */
 
+    /*
+    |--------------------------------------------------------------------------
+    | Read caching
+    |--------------------------------------------------------------------------
+    |
+    | Uses the configured cache store (database by default). Caches contact
+    | details (with latest calls) and unfiltered listing pages only. Filtered
+    | searches are not cached because their parameters rarely repeat.
+    |
+    */
+
+    'cache' => [
+        'enabled' => (bool) env('CONTACTS_CACHE_ENABLED', true),
+        'detail_ttl' => (int) env('CONTACTS_CACHE_DETAIL_TTL', 60),
+        'list_ttl' => (int) env('CONTACTS_CACHE_LIST_TTL', 30),
+    ],
+
     'rate_limits' => [
         'read' => (int) env('CONTACTS_RATE_LIMIT_READ', 120),
         'write' => (int) env('CONTACTS_RATE_LIMIT_WRITE', 30),

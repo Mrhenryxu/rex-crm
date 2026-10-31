@@ -5,6 +5,7 @@ namespace App\Features\Contacts\Actions;
 use App\Features\Contacts\Enums\CallStatus;
 use App\Features\Contacts\Models\ContactCall;
 use App\Features\Contacts\Support\CallSimulator;
+use App\Features\Contacts\Support\ContactCache;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -15,7 +16,10 @@ use Illuminate\Support\Facades\DB;
  */
 final class ProcessContactCall
 {
-    public function __construct(private readonly CallSimulator $simulator) {}
+    public function __construct(
+        private readonly CallSimulator $simulator,
+        private readonly ContactCache $cache,
+    ) {}
 
     public function handle(string $callId): ?ContactCall
     {
@@ -32,6 +36,8 @@ final class ProcessContactCall
                 'outcome' => $this->simulator->simulate($call->phone),
                 'completed_at' => now(),
             ])->save();
+
+            $this->cache->forgetCallsAfterCommit($call->contact_id);
 
             return $call;
         });

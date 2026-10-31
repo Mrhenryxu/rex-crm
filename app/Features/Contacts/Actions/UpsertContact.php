@@ -6,6 +6,7 @@ use App\Features\Contacts\Data\ContactData;
 use App\Features\Contacts\Data\UpsertContactResult;
 use App\Features\Contacts\Exceptions\DuplicateContactEmail;
 use App\Features\Contacts\Models\Contact;
+use App\Features\Contacts\Support\ContactCache;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 
@@ -18,6 +19,8 @@ use Illuminate\Support\Facades\DB;
  */
 final class UpsertContact
 {
+    public function __construct(private readonly ContactCache $cache) {}
+
     public function handle(ContactData $data, ?Contact $contact = null): UpsertContactResult
     {
         try {
@@ -26,16 +29,18 @@ final class UpsertContact
 
                 if ($contact !== null) {
                     $contact->fill($attributes)->save();
-
-                    return new UpsertContactResult($contact, created: false);
+                    $created = false;
+                } else {
+                    $contact = $data->email !== null
+                        // Handles a concurrent insert of the same email by re-reading the winner.
+                        ? Contact::query()->updateOrCreate(['email' => $data->email], $attributes)
+                        : Contact::query()->create($attributes);
+                    $created = $contact->wasRecentlyCreated;
                 }
 
-                $contact = $data->email !== null
-                    // Handles a concurrent insert of the same email by re-reading the winner.
-                    ? Contact::query()->updateOrCreate(['email' => $data->email], $attributes)
-                    : Contact::query()->create($attributes);
+                $this->cache->forgetContactAfterCommit($contact->id);
 
-                return new UpsertContactResult($contact, created: $contact->wasRecentlyCreated);
+                return new UpsertContactResult($contact, $created);
             });
         } catch (UniqueConstraintViolationException $exception) {
             throw DuplicateContactEmail::make($exception);

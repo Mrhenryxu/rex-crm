@@ -7,6 +7,7 @@ use App\Features\Contacts\Exceptions\ContactHasNoPhone;
 use App\Features\Contacts\Jobs\ProcessContactCallJob;
 use App\Features\Contacts\Models\Contact;
 use App\Features\Contacts\Models\ContactCall;
+use App\Features\Contacts\Support\ContactCache;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
@@ -19,6 +20,7 @@ final class PlaceContactCall
     public function __construct(
         private readonly ProcessContactCall $processContactCall,
         private readonly MarkContactCallFailed $markContactCallFailed,
+        private readonly ContactCache $cache,
     ) {}
 
     /**
@@ -35,6 +37,8 @@ final class PlaceContactCall
                 'phone' => $contact->phone,
                 'status' => CallStatus::Pending,
             ]);
+
+            $this->cache->forgetCallsAfterCommit($contact->id);
 
             if ($async) {
                 // Dispatched only if the call row commits; a rolled-back call never reaches a worker.

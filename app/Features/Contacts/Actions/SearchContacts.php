@@ -4,6 +4,7 @@ namespace App\Features\Contacts\Actions;
 
 use App\Features\Contacts\Data\ContactSearchCriteria;
 use App\Features\Contacts\Models\Contact;
+use App\Features\Contacts\Support\ContactCache;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -15,10 +16,20 @@ final class SearchContacts
 {
     private const int MAX_NAME_TOKENS = 3;
 
+    public function __construct(private readonly ContactCache $cache) {}
+
     /**
      * @return LengthAwarePaginator<int, Contact>
      */
     public function handle(ContactSearchCriteria $criteria): LengthAwarePaginator
+    {
+        return $this->cache->rememberList($criteria, fn (): LengthAwarePaginator => $this->query($criteria));
+    }
+
+    /**
+     * @return LengthAwarePaginator<int, Contact>
+     */
+    private function query(ContactSearchCriteria $criteria): LengthAwarePaginator
     {
         $query = Contact::query()
             ->when($criteria->name, fn (Builder $query, string $name) => $this->whereNameStartsWith($query, $name))
