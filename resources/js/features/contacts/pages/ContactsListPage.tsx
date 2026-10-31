@@ -113,8 +113,8 @@ export function ContactsListPage() {
                 )}
             </Card>
 
-            <Modal opened={creating} onClose={closeCreate} title="New contact" size="lg" centered>
-                {creating && <ContactForm submitLabel="Create contact" onCancel={closeCreate} onSubmit={create} />}
+            <Modal opened={creating} onClose={closeCreate} title="New contact" size="lg" centered closeButtonProps={{ 'aria-label': 'Close' }}>
+                {creating && <ContactForm submitLabel="Create contact" onSubmit={create} />}
             </Modal>
         </Stack>
     );

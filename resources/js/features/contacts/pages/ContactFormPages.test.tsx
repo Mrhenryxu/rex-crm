@@ -57,12 +57,13 @@ describe('Contact create and edit forms', () => {
         expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
 
-    test('Cancel closes the popup without saving', async () => {
+    test('the popup has no Cancel button; its close button dismisses it without saving', async () => {
         const user = userEvent.setup();
         const requests = mockApi(listOr(() => ({ body: {} })));
         const dialog = await openCreateDialog(user);
 
-        await user.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+        expect(within(dialog).queryByRole('button', { name: 'Cancel' })).not.toBeInTheDocument();
+        await user.click(within(dialog).getByRole('button', { name: 'Close' }));
 
         await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
         expect(requests.some((request) => request.method === 'POST')).toBe(false);

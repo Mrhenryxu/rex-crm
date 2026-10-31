@@ -14,7 +14,8 @@ interface ContactFormProps {
     defaultValues?: ContactFormValues;
     submitLabel: string;
     onSubmit: (input: ContactInput) => Promise<void>;
-    onCancel: () => void;
+    /** Shows a Cancel button when given. */
+    onCancel?: () => void;
 }
 
 export function ContactForm({ defaultValues = EMPTY_CONTACT_FORM, submitLabel, onSubmit, onCancel }: ContactFormProps) {
@@ -75,13 +76,16 @@ export function ContactForm({ defaultValues = EMPTY_CONTACT_FORM, submitLabel, o
                     render={({ field, fieldState }) => <PhoneField value={field.value} onChange={field.onChange} onBlur={field.onBlur} error={fieldState.error?.message} />}
                 />
 
-                <Group gap="sm">
+                {/* Without onCancel (e.g. inside a modal, which has its own close button) the submit button sits on the right. */}
+                <Group gap="sm" justify={onCancel ? 'flex-start' : 'flex-end'}>
                     <Button type="submit" loading={isSubmitting}>
                         {submitLabel}
                     </Button>
-                    <Button type="button" variant="default" onClick={onCancel} disabled={isSubmitting}>
-                        Cancel
-                    </Button>
+                    {onCancel && (
+                        <Button type="button" variant="default" onClick={onCancel} disabled={isSubmitting}>
+                            Cancel
+                        </Button>
+                    )}
                 </Group>
             </Stack>
         </form>
