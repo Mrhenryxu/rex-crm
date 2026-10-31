@@ -35,6 +35,21 @@ services:
     container_name: rex-crm-queue
     command: ["php", "artisan", "queue:listen", "--tries=3", "--timeout=60"]
 
+  # End-to-end tests only: `docker compose run --rm playwright`. Keep the tag in step with @playwright/test.
+  playwright:
+    image: mcr.microsoft.com/playwright:v1.64.1-noble
+    profiles: ["e2e"]
+    working_dir: /var/www/html
+    volumes:
+      - .:/var/www/html
+    environment:
+      E2E_BASE_URL: http://rex-crm:8000
+    ipc: host
+    depends_on:
+      rex-crm:
+        condition: service_healthy
+    command: ["npx", "playwright", "test"]
+
   postgres:
     image: postgres:18-alpine
     container_name: rex-crm-pgsql
