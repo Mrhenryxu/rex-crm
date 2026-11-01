@@ -1,0 +1,4 @@
+/* The whole row opens the contact. */
+.row {
+    cursor: pointer;
+}

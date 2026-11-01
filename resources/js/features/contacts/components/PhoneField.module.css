@@ -1,0 +1,28 @@
+/* Country picker inside the phone input's left section, separated from the number by a divider. */
+.picker {
+    height: 100%;
+    padding-inline: 0.625rem 0.5rem;
+    border-inline-end: 1px solid var(--mantine-color-default-border);
+}
+
+.select {
+    appearance: auto;
+    border: 0;
+    background: transparent;
+    color: var(--mantine-color-text);
+    font: inherit;
+    font-size: var(--mantine-font-size-sm);
+    cursor: pointer;
+    padding: 0;
+}
+
+.select:focus-visible {
+    outline: 0.125rem solid var(--rex-focus-color);
+    outline-offset: 0.125rem;
+    border-radius: 2px;
+}
+
+/* Keep the native dropdown readable in dark mode. */
+.select option {
+    color: initial;
+}

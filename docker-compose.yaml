@@ -1,0 +1,82 @@
+name: rex-crm
+
+x-app: &app
+  build:
+    context: .
+    dockerfile: docker/app/Dockerfile
+    args:
+      UID: ${UID:-1000}
+      GID: ${GID:-1000}
+  image: rex-crm-app:dev
+  volumes:
+    - .:/var/www/html
+  depends_on:
+    postgres:
+      condition: service_healthy
+
+# Service names differ from the generic "app"/"queue" so they cannot collide with
+# containers from another Compose project that also uses the name "rex-crm".
+services:
+  rex-crm:
+    <<: *app
+    container_name: rex-crm
+    environment:
+      # Runs composer/npm install, .env and APP_KEY creation, migrations and the asset build on start.
+      RUN_SETUP: "1"
+    ports:
+      - "${APP_PORT:-8000}:8000"
+      - "${VITE_PORT:-5173}:5173"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/up"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      # The first start installs dependencies, so allow time before failures count.
+      start_period: 10m
+
+  rex-crm-queue:
+    <<: *app
+    container_name: rex-crm-queue
+    command: ["php", "artisan", "queue:listen", "--tries=3", "--timeout=60"]
+    # Starts once setup in `rex-crm` has finished and the app answers /up.
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rex-crm:
+        condition: service_healthy
+
+  # End-to-end tests only: `docker compose run --rm playwright`. Keep the tag in step with @playwright/test.
+  playwright:
+    image: mcr.microsoft.com/playwright:v1.64.1-noble
+    profiles: ["e2e"]
+    working_dir: /var/www/html
+    volumes:
+      - .:/var/www/html
+    environment:
+      E2E_BASE_URL: http://rex-crm:8000
+    ipc: host
+    depends_on:
+      rex-crm:
+        condition: service_healthy
+    command: ["npx", "playwright", "test"]
+
+  postgres:
+    image: postgres:18-alpine
+    container_name: rex-crm-pgsql
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-rex_crm}
+      POSTGRES_USER: ${DB_USERNAME:-rex}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-secret}
+    ports:
+      - "${FORWARD_DB_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql
+      - ./docker/postgres/create-testing-database.sql:/docker-entrypoint-initdb.d/10-create-testing-database.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres-data:

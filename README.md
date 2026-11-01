@@ -1,58 +1,115 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Rex CRM
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A CRM Contacts application built with Laravel 13, PHP 8.5, React, TypeScript and Mantine UI. The application uses a modular monolith architecture, with Contacts as the first business feature.
 
-## About Laravel
+## Getting Started
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+### Prerequisites
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- Docker and Docker Compose
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+PHP, Composer, Node.js and PostgreSQL are provided through the Docker environment.
 
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+### Start the application
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+docker compose up -d
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+The application entrypoint handles environment initialisation, dependency installation, application key generation, database migrations, local seed data and frontend asset compilation.
 
-## Contributing
+Once started, access the application at:
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+- Frontend: http://localhost:8000
 
-## Code of Conduct
+For a fresh local database:
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```bash
+docker compose exec rex-crm php artisan migrate:fresh --seed
+```
 
-## Security Vulnerabilities
+### Testing commands
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```bash
+# Backend tests
+docker compose exec rex-crm php artisan test
 
-## License
+# Frontend tests
+docker compose exec rex-crm npm test
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+# TypeScript checks
+docker compose exec rex-crm npm run typecheck
+
+# Code style
+docker compose exec rex-crm vendor/bin/pint --test
+
+# End-to-end tests
+docker compose run --rm playwright
+```
+
+Run `npm run build` before executing the Playwright suite if the environment requires a production asset build.
+
+## Architecture and Design Decisions
+
+### Modular monolith
+
+I checked the Rex CRM website and have this idea how it should work. Thus, the application is structured as a modular monolith, with the Contacts feature located under `app/Features/Contacts`. Frontend is under `resources/js/features/contacts` and shared components.
+
+This keeps related business logic together while retaining a single Laravel application, database and deployment unit. It provides clear feature boundaries without introducing the operational complexity of microservices or separate packages.
+
+The structure also leaves room for additional business features as requirements evolve.
+
+### Reusable business logic
+
+Business operations are implemented as reusable Actions. HTTP controllers, Artisan commands and queued jobs act as entry points and delegate to the same business logic.
+
+This avoids duplicating business rules across different interfaces and allows operations to be executed synchronously or asynchronously.
+
+Controllers and commands are intentionally kept thin. I avoided introducing repository classes, generic service layers or additional abstractions where Laravel and Eloquent already provide the required functionality.
+
+### Data integrity and transactions
+
+Database transactions are used for operations involving multiple related records. Database constraints provide an additional layer of protection for data integrity.
+
+Contact deletion also removes associated call records through the configured relationship and database behaviour.
+
+UUIDs are used as externally exposed identifiers, avoiding the need to expose sequential database identifiers through the application interfaces. UUIDs are identifiers, not a substitute for authorisation.
+
+### API and frontend separation
+
+The backend is the source of truth for validation, business rules, filtering, sorting and pagination.
+
+The React SPA communicates through the versioned `/api/v1` API. Search and listing operations are processed by the backend rather than relying on frontend-only filtering.
+
+Mantine provides the frontend component foundation, with TypeScript helping maintain consistency across API data and UI components.
+
+### Laravel-native capabilities
+
+Where practical, the implementation uses Laravel's built-in features for validation, database transactions, queues, caching, rate limiting and Artisan commands.
+
+This reduces external dependencies and keeps the application aligned with the Laravel ecosystem.
+
+## Future Improvements
+
+The implementation prioritises the assessment requirements and a maintainable foundation within the available development time.
+
+Given more time or a broader production scope, I would consider the following improvements:
+
+- **Authentication and authorisation:** Add user authentication, permissions and tenant isolation before exposing the application to multiple customers. These were intentionally excluded from the assessment scope.
+- **Phone validation:** The current AU/NZ validation implements the required format and numbering rules. Integrating a maintained phone-number metadata library would provide more comprehensive numbering-plan validation and better support for future countries.
+- **Caching:** The current database-backed cache provides limited performance benefits. I would benchmark actual usage and consider Redis or another dedicated cache store if the workload justified it.
+- **Observability:** Introduce structured logging, monitoring and alerting for API failures, queue processing and application performance.
+- **Automated testing:** Expand end-to-end coverage, accessibility checks and browser compatibility testing, particularly around more complex user workflows.
+- **Performance:** Review query plans and production usage metrics to refine indexes, caching and pagination strategies as data volumes grow.
+
+I have deliberately avoided implementing speculative features or introducing infrastructure that is not justified by the current requirements.
+
+## Development Approach and AI Tooling
+
+Kiro IDE was used as the primary AI-assisted development environment. Approx 600 tokens used.
+
+The development process used project steering files and focused Skills to establish requirements, architecture, coding conventions and implementation guidance before generating code.
+
+AI assistance was used for implementation support, test generation and code review. Generated code and recommendations were reviewed against the requirements, project conventions and test results rather than accepted without verification.
+
+The implementation decisions and trade-offs are documented here to make the solution easier to review and extend.

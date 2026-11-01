@@ -1,0 +1,22 @@
+.link {
+    display: inline-flex;
+    align-items: center;
+    /* Navy wordmark (#0F2B66, --swatch--navy) in light mode, white in dark mode. */
+    color: #0f2b66;
+    border-radius: var(--mantine-radius-sm);
+}
+
+[data-mantine-color-scheme='dark'] .link {
+    color: var(--mantine-color-white);
+}
+
+.logo {
+    display: block;
+    line-height: 0;
+}
+
+.logo svg {
+    display: block;
+    width: auto;
+    height: 1.75rem; /* the file's native 28px height */
+}
